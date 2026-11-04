@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
-  Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split
+  Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save
 } from 'lucide-react';
 
 function App() {
@@ -74,25 +74,28 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 25.00, splitCount: 1, expiryDate: '2026-08-15', addedBy: 'Vitor' },
-    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', price: 9.50, splitCount: 2, expiryDate: '2026-05-10', addedBy: 'Ana' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitCount: 2, expiryDate: '2026-08-15', addedBy: 'Vitor' },
+    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', price: 10.00, splitCount: 2, expiryDate: '2026-05-10', addedBy: 'Ana' }
   ]);
 
   const [shoppingList] = useState([
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
-  // Lista de moradores iniciada limpa (sem presets fictícios)
   const [residents, setResidents] = useState([
-    { id: 1, name: 'Vitor (Você)', email: 'vitor@rep.com', avatar: '👨‍💻', balance: 'R$ 0,00' }
+    { id: 1, name: 'Vitor', email: 'vitor@rep.com', avatar: '👨‍💻' },
+    { id: 2, name: 'Ana', email: 'ana@rep.com', avatar: '👩‍🔬' }
   ]);
 
   const [activePopup, setActivePopup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  
+  // Modais de Criação e Edição
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null); // Guarda o item que está sendo editado
 
-  // Estados do convite por e-mail
+  // Estados de convite por e-mail
   const [inviteStep, setInviteStep] = useState(1);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
@@ -100,7 +103,6 @@ function App() {
   const [inputCode, setInputCode] = useState('');
   const [inviteError, setInviteError] = useState('');
 
-  // Estado do formulário com preço e divisão
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
@@ -108,7 +110,7 @@ function App() {
     minQuantity: 1,
     unit: 'un',
     price: '',
-    splitCount: 1, // 1 = Individual, 2+ = Dividido entre X pessoas
+    splitCount: 1,
     expiryDate: '',
     addedBy: 'Vitor'
   });
@@ -116,7 +118,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE SUPORTE E LÓGICA
+  // 3. FUNÇÕES DE CÁLCULO E LÓGICA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -167,6 +169,22 @@ function App() {
     setIsAddModalOpen(false);
   };
 
+  // Salvar Edição do Produto Existente
+  const handleUpdateItem = (e) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    setItems(items.map(item => item.id === editingItem.id ? {
+      ...editingItem,
+      quantity: Number(editingItem.quantity),
+      minQuantity: Number(editingItem.minQuantity),
+      price: editingItem.price ? Number(editingItem.price) : 0,
+      splitCount: Number(editingItem.splitCount)
+    } : item));
+
+    setEditingItem(null);
+  };
+
   const handleSendInviteCode = (e) => {
     e.preventDefault();
     if (!inviteEmail || !inviteName) return;
@@ -189,8 +207,7 @@ function App() {
         id: Date.now(),
         name: inviteName,
         email: inviteEmail,
-        avatar: randomAvatar,
-        balance: 'R$ 0,00'
+        avatar: randomAvatar
       };
 
       setResidents([...residents, newResident]);
@@ -217,6 +234,19 @@ function App() {
 
   const deleteItem = (id) => {
     setItems(items.filter(item => item.id !== id));
+  };
+
+  // Cálculo Dinâmico de Gastos por Morador baseado nas divisões da despensa
+  const calculateResidentBalance = (residentName) => {
+    let totalOwed = 0;
+    items.forEach(item => {
+      const price = item.price ? Number(item.price) : 0;
+      const split = item.splitCount > 1 ? item.splitCount : 1;
+      if (price > 0 && split > 1) {
+        totalOwed += price / split; // Cada morador participante deve sua cota
+      }
+    });
+    return totalOwed;
   };
 
   const filteredItems = items
@@ -368,7 +398,7 @@ function App() {
             )}
           </div>
 
-          {/* Grid de Produtos com Preço e Divisão */}
+          {/* Grid de Produtos com Botão de Edição Direta */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredItems.map((item) => {
               const isCritical = item.quantity === 0;
@@ -413,9 +443,19 @@ function App() {
                       </span>
                       {badgeContent}
                     </div>
-                    <h3 className="font-bold text-slate-800 text-base mb-1">{item.name}</h3>
-                    
-                    {/* Exibição de Preço e Divisão no Card */}
+
+                    <div className="flex justify-between items-start gap-2 mb-1">
+                      <h3 className="font-bold text-slate-800 text-base">{item.name}</h3>
+                      {/* Botão de Edição Direta no Card */}
+                      <button 
+                        onClick={() => setEditingItem(item)}
+                        className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-all"
+                        title="Editar produto, preço ou quantidade"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </div>
+
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       {unitPrice > 0 && (
                         <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
@@ -496,7 +536,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP: MORADORES & CONVITE */}
+      {/* POPUP: MORADORES & SALDOS CALCULADOS AUTOMATICAMENTE */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -506,8 +546,8 @@ function App() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Moradores da Casa ({residents.length})</h3>
-                  <p className="text-xs text-slate-400">Gerencie os membros ativos da república</p>
+                  <h3 className="text-lg font-bold text-slate-800">Moradores & Divisão de Contas</h3>
+                  <p className="text-xs text-slate-400">Saldos calculados automaticamente com base na despensa</p>
                 </div>
               </div>
               <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -585,28 +625,134 @@ function App() {
               )}
             </div>
 
-            {/* LISTA DE MORADORES */}
+            {/* LISTA DE MORADORES COM SALDO CALCULADO */}
             <div className="space-y-3 max-h-60 overflow-y-auto">
-              {residents.map((res) => (
-                <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{res.avatar}</span>
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
-                      <p className="text-[11px] text-slate-400">{res.email || 'Cadastrado'}</p>
+              {residents.map((res) => {
+                const userBalance = calculateResidentBalance(res.name);
+                return (
+                  <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{res.avatar}</span>
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
+                        <p className="text-[11px] text-slate-400">{res.email || 'Ativo na república'}</p>
+                      </div>
                     </div>
+                    <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
+                      Débito: R$ {userBalance.toFixed(2)}
+                    </span>
                   </div>
-                  <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
-                    {res.balance}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE ADICIONAR ITEM COM PREÇO E DIVISÃO */}
+      {/* MODAL DE EDIÇÃO DIRETA DE PRODUTO EXISTENTE */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-indigo-600" /> Editar Mantimento
+            </h3>
+            
+            <form onSubmit={handleUpdateItem} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Nome do Item</label>
+                <input
+                  type="text"
+                  required
+                  value={editingItem.name}
+                  onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Quantidade</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={editingItem.quantity}
+                    onChange={(e) => setEditingItem({...editingItem, quantity: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Estoque Mínimo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingItem.minQuantity}
+                    onChange={(e) => setEditingItem({...editingItem, minQuantity: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Preço Total (R$)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editingItem.price || ''}
+                    onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Divisão (Pessoas)</label>
+                  <select
+                    value={editingItem.splitCount || 1}
+                    onChange={(e) => setEditingItem({...editingItem, splitCount: Number(e.target.value)})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  >
+                    <option value={1}>Não dividir (1)</option>
+                    {Array.from({ length: Math.max(1, residents.length) }, (_, i) => i + 2).map((num) => (
+                      <option key={num} value={num}>Dividir entre {num}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Validade</label>
+                <input
+                  type="date"
+                  value={editingItem.expiryDate || ''}
+                  onChange={(e) => setEditingItem({...editingItem, expiryDate: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md"
+                >
+                  <Save className="w-4 h-4" /> Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ADICIONAR NOVO ITEM */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
@@ -700,7 +846,6 @@ function App() {
                 </div>
               </div>
 
-              {/* SEÇÃO DE PREÇO E DIVISÃO DE CONTAS */}
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
@@ -719,17 +864,16 @@ function App() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                    <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir entre (Pessoas)
+                    <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir entre
                   </label>
                   <select
                     value={newItem.splitCount}
                     onChange={(e) => setNewItem({...newItem, splitCount: Number(e.target.value)})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   >
-                    <option value={1}>Não dividir (1 pessoa)</option>
-                    {/* Gera opções dinâmicas de 2 até o total de moradores cadastrados (mínimo 2, máximo residents.length) */}
-                    {Array.from({ length: Math.max(1, residents.length - 1) }, (_, i) => i + 2).map((num) => (
-                      <option key={num} value={num}>Dividir entre {num} pessoas</option>
+                    <option value={1}>Não dividir (1)</option>
+                    {Array.from({ length: Math.max(1, residents.length) }, (_, i) => i + 2).map((num) => (
+                      <option key={num} value={num}>Dividir entre {num}</option>
                     ))}
                   </select>
                 </div>
