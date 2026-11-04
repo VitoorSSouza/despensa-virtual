@@ -2,15 +2,14 @@ import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Shield, Calendar, RefreshCw, Search,
-  ArrowUpDown, Filter, Sparkles, Home, Check
+  ArrowUpDown, Filter, Sparkles, Home, Check, X
 } from 'lucide-react';
 
 function App() {
   // ==========================================
-  // 1. BASE DE DADOS PRÉ-CADASTRADA (SUGESTÕES)
+  // 1. BASE DE DADOS DE PRODUTOS PRÉ-CADASTRADOS
   // ==========================================
   const PRESET_PRODUCTS = [
-    // Grãos e Massas
     { name: 'Arroz 5kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Feijão Carioca 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
     { name: 'Açúcar 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
@@ -24,7 +23,6 @@ function App() {
     { name: 'Tapioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Milho para Pipoca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
 
-    // Óleos e Molhos
     { name: 'Óleo de Soja 900ml', category: 'Temperos', unit: 'un', minQuantity: 2 },
     { name: 'Azeite de Oliva 500ml', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Vinagre', category: 'Temperos', unit: 'un', minQuantity: 1 },
@@ -38,7 +36,6 @@ function App() {
     { name: 'Palmito', category: 'Outros', unit: 'un', minQuantity: 1 },
     { name: 'Leite de Coco', category: 'Outros', unit: 'un', minQuantity: 1 },
 
-    // Café e Matinais
     { name: 'Café em Pó 500g', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
     { name: 'Leite Integral 1L', category: 'Laticínios', unit: 'un', minQuantity: 6 },
     { name: 'Achocolatado em Pó', category: 'Bebidas', unit: 'un', minQuantity: 1 },
@@ -51,7 +48,6 @@ function App() {
     { name: 'Requeijão', category: 'Laticínios', unit: 'un', minQuantity: 1 },
     { name: 'Doce de Leite / Geleia', category: 'Outros', unit: 'un', minQuantity: 1 },
 
-    // Temperos e Condimentos
     { name: 'Alho e Cebola', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Orégano / Pimenta-do-reino', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Colorau / Páprica', category: 'Temperos', unit: 'un', minQuantity: 1 },
@@ -59,7 +55,6 @@ function App() {
     { name: 'Maionese / Ketchup / Mostarda', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Molho Shoyu', category: 'Temperos', unit: 'un', minQuantity: 1 },
 
-    // Carnes e Congelados
     { name: 'Peito de Frango / Filé', category: 'Outros', unit: 'kg', minQuantity: 2 },
     { name: 'Carne Bovina Moída', category: 'Outros', unit: 'kg', minQuantity: 2 },
     { name: 'Linguiça / Salsicha', category: 'Outros', unit: 'pct', minQuantity: 1 },
@@ -106,7 +101,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. NORMALIZAÇÃO E ORDENAÇÃO ALFABÉTICA DA BUSCA
+  // 3. FUNÇÕES DE NORMALIZAÇÃO E CRITÉRIO DE BUSCA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -115,7 +110,7 @@ function App() {
       .replace(/[\u0300-\u036f]/g, '');
   };
 
-  // Filtra e ORDENA ALFABETICAMENTE as sugestões
+  // Sugestões inteligentes priorizando termos que INICIAM com o que foi digitado
   const query = normalizeText(newItem.name.trim());
   const matchingPresets = query === '' ? [] : PRESET_PRODUCTS
     .filter(p => normalizeText(p.name).includes(query))
@@ -126,14 +121,13 @@ function App() {
       const startsWithA = nameA.startsWith(query);
       const startsWithB = nameB.startsWith(query);
 
-      // Prioriza os que começam exatamente com o texto digitado
+      // Prioridade máxima para palavras que COMEÇAM com o termo digitado
       if (startsWithA && !startsWithB) return -1;
       if (!startsWithA && startsWithB) return 1;
 
-      // Ordenação Alfabética padrão (A-Z)
       return a.name.localeCompare(b.name, 'pt-BR');
     })
-    .slice(0, 6);
+    .slice(0, 4); // Limite de 4 sugestões para evitar poluição visual no modal
 
   const handleSelectPreset = (preset) => {
     setNewItem({
@@ -175,13 +169,14 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
+  // Filtragem da despensa principal respeitando a categoria e pesquisa abrangente
   const filteredItems = items
     .filter(item => {
       const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
       const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
-    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')); // Produtos da despensa também ordenados em A-Z
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
   // ==========================================
   // 4. INTERFACE GRÁFICA (JSX)
@@ -262,24 +257,37 @@ function App() {
               </button>
             </div>
 
-            {/* Categorias */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {categories.map((cat) => (
+            {/* Categorias com Botão de Pesquisa Abrangente / Limpeza de Filtro */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
+              <div className="flex gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Botão para pesquisa abrangente (se houver categoria específica ou termo de busca ativo) */}
+              {(selectedCategory !== 'Todos' || searchTerm !== '') && (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                  }`}
+                  onClick={() => { setSelectedCategory('Todos'); setSearchTerm(''); }}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl text-xs font-bold whitespace-nowrap transition-all"
+                  title="Limpar filtros e fazer pesquisa abrangente"
                 >
-                  {cat}
+                  <X className="w-3.5 h-3.5" /> Pesquisa Abrangente (Mostrar Tudo)
                 </button>
-              ))}
+              )}
             </div>
 
-            {/* Grid de Itens em Ordem Alfabética */}
+            {/* Grid de Itens */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => {
                 const isLow = item.quantity <= item.minQuantity;
@@ -361,7 +369,7 @@ function App() {
       </main>
 
       {/* ==========================================
-          5. MODAL COM AUTOCOMPLETE ORDENADO EM A-Z
+          5. MODAL COM AUTOCOMPLETE OTIMIZADO
           ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -371,18 +379,18 @@ function App() {
             <form onSubmit={handleAddItem} className="space-y-4">
               <div className="relative">
                 <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Sugestões em Ordem Alfabética)
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Prioridade para início do termo)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: acucar, feijao, cafe..."
+                  placeholder="Ex: arr (Arroz)..."
                   value={newItem.name}
                   onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
 
-                {/* Sugestões em Ordem Alfabética */}
+                {/* Sugestões Limpas e Críticas */}
                 {matchingPresets.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 overflow-hidden max-h-48 overflow-y-auto">
                     {matchingPresets.map((preset, idx) => (
