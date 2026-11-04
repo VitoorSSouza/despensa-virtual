@@ -3,7 +3,7 @@ import {
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
   Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save,
-  UserX, ShieldAlert
+  UserX, ShieldAlert, Check
 } from 'lucide-react';
 
 function App() {
@@ -75,14 +75,14 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitCount: 1, expiryDate: '2026-08-15', addedBy: 'Admin' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitWith: [], expiryDate: '2026-08-15', addedBy: 'Admin' }
   ]);
 
   const [shoppingList] = useState([
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
-  // Iniciando com lista vazia de moradores (do zero)
+  // Moradores cadastrados (inicia vazio para ir adicionando)
   const [residents, setResidents] = useState([]);
 
   const [activePopup, setActivePopup] = useState(null);
@@ -100,6 +100,7 @@ function App() {
   const [inputCode, setInputCode] = useState('');
   const [inviteError, setInviteError] = useState('');
 
+  // Novo item: splitWith armazena os IDs dos moradores que vão dividir este item
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
@@ -107,7 +108,7 @@ function App() {
     minQuantity: 1,
     unit: 'un',
     price: '',
-    splitCount: 1,
+    splitWith: [],
     expiryDate: '',
     addedBy: 'Admin'
   });
@@ -148,6 +149,27 @@ function App() {
     });
   };
 
+  // Alternar seleção de morador para divisão do novo item
+  const toggleSplitMemberNew = (residentId) => {
+    const current = newItem.splitWith;
+    if (current.includes(residentId)) {
+      setNewItem({ ...newItem, splitWith: current.filter(id => id !== residentId) });
+    } else {
+      setNewItem({ ...newItem, splitWith: [...current, residentId] });
+    }
+  };
+
+  // Alternar seleção de morador para divisão do item em edição
+  const toggleSplitMemberEdit = (residentId) => {
+    if (!editingItem) return;
+    const current = editingItem.splitWith || [];
+    if (current.includes(residentId)) {
+      setEditingItem({ ...editingItem, splitWith: current.filter(id => id !== residentId) });
+    } else {
+      setEditingItem({ ...editingItem, splitWith: [...current, residentId] });
+    }
+  };
+
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItem.name) return;
@@ -158,11 +180,11 @@ function App() {
       quantity: Number(newItem.quantity),
       minQuantity: Number(newItem.minQuantity),
       price: newItem.price ? Number(newItem.price) : 0,
-      splitCount: Number(newItem.splitCount)
+      splitWith: newItem.splitWith || []
     };
 
     setItems([...items, itemToAdd]);
-    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitCount: 1, expiryDate: '', addedBy: 'Admin' });
+    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitWith: [], expiryDate: '', addedBy: 'Admin' });
     setIsAddModalOpen(false);
   };
 
@@ -175,7 +197,7 @@ function App() {
       quantity: Number(editingItem.quantity),
       minQuantity: Number(editingItem.minQuantity),
       price: editingItem.price ? Number(editingItem.price) : 0,
-      splitCount: Number(editingItem.splitCount)
+      splitWith: editingItem.splitWith || []
     } : item));
 
     setEditingItem(null);
@@ -232,17 +254,17 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  // Cálculo Dinâmico de Saldos
-  const calculateResidentBalance = () => {
-    let totalOwed = 0;
+  // Cálculo de quanto cada morador específico deve somando os itens em que ele foi incluído
+  const calculateResidentDebt = (residentId) => {
+    let debt = 0;
     items.forEach(item => {
       const price = item.price ? Number(item.price) : 0;
-      const split = item.splitCount > 1 ? item.splitCount : 1;
-      if (price > 0 && split > 1 && residents.length >= split) {
-        totalOwed += price / split;
+      const splitList = item.splitWith || [];
+      if (price > 0 && splitList.includes(residentId)) {
+        debt += price / splitList.length;
       }
     });
-    return residents.length > 0 ? totalOwed / residents.length : 0;
+    return debt;
   };
 
   const filteredItems = items
@@ -344,7 +366,7 @@ function App() {
             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
               Dispensa Virtual <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full">Acadêmico</span>
             </h1>
-            <p className="text-xs text-slate-400">Gestão inteligente de mantimentos e divisão de custos</p>
+            <p className="text-xs text-slate-400">Gestão inteligente de mantimentos e divisão personalizada de custos</p>
           </div>
 
           <button
@@ -427,8 +449,8 @@ function App() {
               }
 
               const unitPrice = item.price ? Number(item.price) : 0;
-              const split = item.splitCount > 1 ? item.splitCount : 1;
-              const pricePerPerson = unitPrice > 0 ? (unitPrice / split).toFixed(2) : '0,00';
+              const splitList = item.splitWith || [];
+              const pricePerPerson = unitPrice > 0 && splitList.length > 0 ? (unitPrice / splitList.length).toFixed(2) : '0,00';
 
               return (
                 <div key={item.id} className={`p-5 rounded-3xl border transition-all hover:shadow-md flex flex-col justify-between ${cardStyle}`}>
@@ -457,9 +479,13 @@ function App() {
                           <DollarSign className="w-3 h-3" /> R$ {unitPrice.toFixed(2)}
                         </span>
                       )}
-                      {split > 1 && (
+                      {splitList.length > 0 ? (
                         <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 flex items-center gap-1">
-                          <Split className="w-3 h-3" /> Div: {split}p (R$ {pricePerPerson}/pes)
+                          <Split className="w-3 h-3" /> Div: {splitList.length} pes (R$ {pricePerPerson} cad)
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
+                          Sem divisão
                         </span>
                       )}
                     </div>
@@ -531,7 +557,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP: MORADORES & ESTADOS VAZIOS INTELIGENTES (BOTÕES FANTASMAS) */}
+      {/* POPUP: MORADORES & SALDOS CORRETOS */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -542,7 +568,7 @@ function App() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Moradores & Divisão de Custos</h3>
-                  <p className="text-xs text-slate-400">Gerencie os membros da república</p>
+                  <p className="text-xs text-slate-400">Total de {residents.length} morador(es) cadastrado(s)</p>
                 </div>
               </div>
               <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -620,47 +646,17 @@ function App() {
               )}
             </div>
 
-            {/* LISTA DE MORADORES COM ESTADOS VAZIOS (BOTÕES FANTASMAS) */}
+            {/* LISTA DE MORADORES */}
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {residents.length === 0 ? (
-                /* Estado Vazio Absoluto (Nenhum morador) */
                 <div className="text-center py-8 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <UserX className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <h4 className="font-bold text-sm text-slate-700">Nenhum morador cadastrado</h4>
-                  <p className="text-xs text-slate-400 mt-1">Adicione pelo menos 2 moradores para habilitar a divisão automática de custos.</p>
-                </div>
-              ) : residents.length === 1 ? (
-                /* Estado com Apenas 1 Morador (Divisão Indisponível - Botão Fantasma / Aviso) */
-                <div className="space-y-3">
-                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3">
-                    <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-bold text-xs text-amber-800 uppercase tracking-wider">Divisão Indisponível</h4>
-                      <p className="text-xs text-amber-700 mt-0.5">
-                        Você cadastrou apenas 1 morador. A divisão de custos exige no mínimo <span className="font-bold">2 pessoas</span> para funcionar. Convide mais um colega acima!
-                      </p>
-                    </div>
-                  </div>
-
-                  {residents.map((res) => (
-                    <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100 opacity-75">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{res.avatar}</span>
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
-                          <p className="text-[11px] text-slate-400">{res.email}</p>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-slate-200 text-slate-600">
-                        Divisão pausada (1 pes.)
-                      </span>
-                    </div>
-                  ))}
+                  <p className="text-xs text-slate-400 mt-1">Cadastre os moradores acima para começar a dividir os custos.</p>
                 </div>
               ) : (
-                /* 2 ou mais moradores: Exibe os saldos calculados perfeitamente */
                 residents.map((res) => {
-                  const userShare = calculateResidentBalance();
+                  const debt = calculateResidentDebt(res.id);
                   return (
                     <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                       <div className="flex items-center gap-3">
@@ -671,7 +667,7 @@ function App() {
                         </div>
                       </div>
                       <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
-                        Cota: R$ {userShare.toFixed(2)}
+                        Total Devido: R$ {debt.toFixed(2)}
                       </span>
                     </div>
                   );
@@ -685,7 +681,7 @@ function App() {
       {/* MODAL DE EDIÇÃO DIRETA DE PRODUTO */}
       {editingItem && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <Edit3 className="w-5 h-5 text-indigo-600" /> Editar Mantimento
             </h3>
@@ -727,32 +723,49 @@ function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Preço Total (R$)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={editingItem.price || ''}
-                    onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Preço Total (R$)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editingItem.price || ''}
+                  onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Divisão (Pessoas)</label>
-                  <select
-                    value={editingItem.splitCount || 1}
-                    onChange={(e) => setEditingItem({...editingItem, splitCount: Number(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  >
-                    <option value={1}>Não dividir (1)</option>
-                    {Array.from({ length: Math.max(1, residents.length) }, (_, i) => i + 2).map((num) => (
-                      <option key={num} value={num}>Dividir entre {num}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* SELEÇÃO ESPECÍFICA DE QUEM VAI DIVIDIR ESTE ITEM */}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
+                  <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir com quais moradores?
+                </label>
+                {residents.length === 0 ? (
+                  <p className="text-xs text-slate-400 bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
+                    Nenhum morador cadastrado. Cadastre moradores na aba lateral para poder dividi-los aqui.
+                  </p>
+                ) : (
+                  <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
+                    {residents.map((res) => {
+                      const isSelected = (editingItem.splitWith || []).includes(res.id);
+                      return (
+                        <button
+                          key={res.id}
+                          type="button"
+                          onClick={() => toggleSplitMemberEdit(res.id)}
+                          className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold transition-all ${
+                            isSelected ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{res.avatar}</span> {res.name}
+                          </span>
+                          {isSelected && <Check className="w-4 h-4" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -788,7 +801,7 @@ function App() {
       {/* MODAL DE ADICIONAR NOVO ITEM */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-slate-800 mb-4">Adicionar Novo Mantimento</h3>
             
             <form onSubmit={handleAddItem} className="space-y-4">
@@ -879,37 +892,52 @@ function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Preço Total (R$)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Ex: 25.00"
-                    value={newItem.price}
-                    onChange={(e) => setNewItem({...newItem, price: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Preço Total (R$)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Ex: 25.00"
+                  value={newItem.price}
+                  onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                    <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir entre
-                  </label>
-                  <select
-                    value={newItem.splitCount}
-                    onChange={(e) => setNewItem({...newItem, splitCount: Number(e.target.value)})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  >
-                    <option value={1}>Não dividir (1)</option>
-                    {Array.from({ length: Math.max(1, residents.length) }, (_, i) => i + 2).map((num) => (
-                      <option key={num} value={num}>Dividir entre {num}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* SELEÇÃO ESPECÍFICA DE QUEM VAI DIVIDIR O NOVO ITEM */}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
+                  <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir com quais moradores?
+                </label>
+                {residents.length === 0 ? (
+                  <p className="text-xs text-slate-400 bg-slate-50 p-3 rounded-xl border border-dashed border-slate-200">
+                    Nenhum morador cadastrado. Cadastre moradores na aba lateral para poder dividi-los aqui.
+                  </p>
+                ) : (
+                  <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
+                    {residents.map((res) => {
+                      const isSelected = newItem.splitWith.includes(res.id);
+                      return (
+                        <button
+                          key={res.id}
+                          type="button"
+                          onClick={() => toggleSplitMemberNew(res.id)}
+                          className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold transition-all ${
+                            isSelected ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{res.avatar}</span> {res.name}
+                          </span>
+                          {isSelected && <Check className="w-4 h-4" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>
