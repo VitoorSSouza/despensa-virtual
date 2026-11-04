@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
-  Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save
+  Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save,
+  UserX, ShieldAlert
 } from 'lucide-react';
 
 function App() {
@@ -74,26 +75,22 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitCount: 2, expiryDate: '2026-08-15', addedBy: 'Vitor' },
-    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', price: 10.00, splitCount: 2, expiryDate: '2026-05-10', addedBy: 'Ana' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitCount: 1, expiryDate: '2026-08-15', addedBy: 'Admin' }
   ]);
 
   const [shoppingList] = useState([
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
-  const [residents, setResidents] = useState([
-    { id: 1, name: 'Vitor', email: 'vitor@rep.com', avatar: '👨‍💻' },
-    { id: 2, name: 'Ana', email: 'ana@rep.com', avatar: '👩‍🔬' }
-  ]);
+  // Iniciando com lista vazia de moradores (do zero)
+  const [residents, setResidents] = useState([]);
 
   const [activePopup, setActivePopup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   
-  // Modais de Criação e Edição
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null); // Guarda o item que está sendo editado
+  const [editingItem, setEditingItem] = useState(null);
 
   // Estados de convite por e-mail
   const [inviteStep, setInviteStep] = useState(1);
@@ -112,13 +109,13 @@ function App() {
     price: '',
     splitCount: 1,
     expiryDate: '',
-    addedBy: 'Vitor'
+    addedBy: 'Admin'
   });
 
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE CÁLCULO E LÓGICA
+  // 3. FUNÇÕES DE SUPORTE E LÓGICA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -165,11 +162,10 @@ function App() {
     };
 
     setItems([...items, itemToAdd]);
-    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitCount: 1, expiryDate: '', addedBy: 'Vitor' });
+    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitCount: 1, expiryDate: '', addedBy: 'Admin' });
     setIsAddModalOpen(false);
   };
 
-  // Salvar Edição do Produto Existente
   const handleUpdateItem = (e) => {
     e.preventDefault();
     if (!editingItem) return;
@@ -236,17 +232,17 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  // Cálculo Dinâmico de Gastos por Morador baseado nas divisões da despensa
-  const calculateResidentBalance = (residentName) => {
+  // Cálculo Dinâmico de Saldos
+  const calculateResidentBalance = () => {
     let totalOwed = 0;
     items.forEach(item => {
       const price = item.price ? Number(item.price) : 0;
       const split = item.splitCount > 1 ? item.splitCount : 1;
-      if (price > 0 && split > 1) {
-        totalOwed += price / split; // Cada morador participante deve sua cota
+      if (price > 0 && split > 1 && residents.length >= split) {
+        totalOwed += price / split;
       }
     });
-    return totalOwed;
+    return residents.length > 0 ? totalOwed / residents.length : 0;
   };
 
   const filteredItems = items
@@ -398,7 +394,7 @@ function App() {
             )}
           </div>
 
-          {/* Grid de Produtos com Botão de Edição Direta */}
+          {/* Grid de Produtos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredItems.map((item) => {
               const isCritical = item.quantity === 0;
@@ -446,11 +442,10 @@ function App() {
 
                     <div className="flex justify-between items-start gap-2 mb-1">
                       <h3 className="font-bold text-slate-800 text-base">{item.name}</h3>
-                      {/* Botão de Edição Direta no Card */}
                       <button 
                         onClick={() => setEditingItem(item)}
                         className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-all"
-                        title="Editar produto, preço ou quantidade"
+                        title="Editar produto"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -536,7 +531,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP: MORADORES & SALDOS CALCULADOS AUTOMATICAMENTE */}
+      {/* POPUP: MORADORES & ESTADOS VAZIOS INTELIGENTES (BOTÕES FANTASMAS) */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -546,8 +541,8 @@ function App() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Moradores & Divisão de Contas</h3>
-                  <p className="text-xs text-slate-400">Saldos calculados automaticamente com base na despensa</p>
+                  <h3 className="text-lg font-bold text-slate-800">Moradores & Divisão de Custos</h3>
+                  <p className="text-xs text-slate-400">Gerencie os membros da república</p>
                 </div>
               </div>
               <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -625,31 +620,69 @@ function App() {
               )}
             </div>
 
-            {/* LISTA DE MORADORES COM SALDO CALCULADO */}
+            {/* LISTA DE MORADORES COM ESTADOS VAZIOS (BOTÕES FANTASMAS) */}
             <div className="space-y-3 max-h-60 overflow-y-auto">
-              {residents.map((res) => {
-                const userBalance = calculateResidentBalance(res.name);
-                return (
-                  <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{res.avatar}</span>
-                      <div>
-                        <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
-                        <p className="text-[11px] text-slate-400">{res.email || 'Ativo na república'}</p>
-                      </div>
+              {residents.length === 0 ? (
+                /* Estado Vazio Absoluto (Nenhum morador) */
+                <div className="text-center py-8 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <UserX className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <h4 className="font-bold text-sm text-slate-700">Nenhum morador cadastrado</h4>
+                  <p className="text-xs text-slate-400 mt-1">Adicione pelo menos 2 moradores para habilitar a divisão automática de custos.</p>
+                </div>
+              ) : residents.length === 1 ? (
+                /* Estado com Apenas 1 Morador (Divisão Indisponível - Botão Fantasma / Aviso) */
+                <div className="space-y-3">
+                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-xs text-amber-800 uppercase tracking-wider">Divisão Indisponível</h4>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Você cadastrou apenas 1 morador. A divisão de custos exige no mínimo <span className="font-bold">2 pessoas</span> para funcionar. Convide mais um colega acima!
+                      </p>
                     </div>
-                    <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
-                      Débito: R$ {userBalance.toFixed(2)}
-                    </span>
                   </div>
-                );
-              })}
+
+                  {residents.map((res) => (
+                    <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100 opacity-75">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{res.avatar}</span>
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
+                          <p className="text-[11px] text-slate-400">{res.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-slate-200 text-slate-600">
+                        Divisão pausada (1 pes.)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* 2 ou mais moradores: Exibe os saldos calculados perfeitamente */
+                residents.map((res) => {
+                  const userShare = calculateResidentBalance();
+                  return (
+                    <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{res.avatar}</span>
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
+                          <p className="text-[11px] text-slate-400">{res.email}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
+                        Cota: R$ {userShare.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DE EDIÇÃO DIRETA DE PRODUTO EXISTENTE */}
+      {/* MODAL DE EDIÇÃO DIRETA DE PRODUTO */}
       {editingItem && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
