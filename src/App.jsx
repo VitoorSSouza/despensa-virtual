@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
-  Mail, KeyRound, UserPlus
+  Mail, KeyRound, UserPlus, RefreshCcw
 } from 'lucide-react';
 
 function App() {
@@ -83,21 +83,19 @@ function App() {
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
-  // Lista de Moradores
   const [residents, setResidents] = useState([
     { id: 1, name: 'Vitor', email: 'vitor@rep.com', avatar: '👨‍💻', balance: '+ R$ 15,00' },
     { id: 2, name: 'Ana', email: 'ana@rep.com', avatar: '👩‍🔬', balance: '- R$ 10,00' },
     { id: 3, name: 'Carlos', email: 'carlos@rep.com', avatar: '👨‍🎨', balance: 'R$ 0,00' }
   ]);
 
-  // Modais estilo Popup
-  const [activePopup, setActivePopup] = useState(null); // 'shopping' | 'residents' | null
+  const [activePopup, setActivePopup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Estados do sistema de convite de morador por e-mail e código
-  const [inviteStep, setInviteStep] = useState(1); // 1 = Digitar E-mail, 2 = Digitar Código
+  // Estados do convite por e-mail
+  const [inviteStep, setInviteStep] = useState(1);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
@@ -166,22 +164,19 @@ function App() {
     setIsAddModalOpen(false);
   };
 
-  // Gerar e Enviar Código de Validação por E-mail
+  // Enviar ou Reenviar Código de Validação
   const handleSendInviteCode = (e) => {
     e.preventDefault();
     if (!inviteEmail || !inviteName) return;
 
-    // Gera um código de 6 dígitos aleatório
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedCode(code);
     setInviteStep(2);
     setInviteError('');
 
-    // Alerta informativo simulando a caixa de entrada
-    alert(`⚡ [Simulação de Envio de E-mail]\n\nUm e-mail foi enviado para: ${inviteEmail}\nSeu código de acesso é: ${code}`);
+    alert(`⚡ [E-mail Reenviado / Enviado]\n\nE-mail para: ${inviteEmail}\nCódigo de acesso: ${code}`);
   };
 
-  // Confirmar Código digitado pelo morador
   const handleVerifyCode = (e) => {
     e.preventDefault();
     if (inputCode === generatedCode) {
@@ -204,7 +199,7 @@ function App() {
       setGeneratedCode('');
       alert('✅ Morador validado e adicionado com sucesso!');
     } else {
-      setInviteError('Código incorreto. Verifique o código e tente novamente.');
+      setInviteError('Código incorreto. Tente novamente.');
     }
   };
 
@@ -241,7 +236,7 @@ function App() {
     });
 
   // ==========================================
-  // 4. INTERFACE GRÁFICA COM SIDEBAR VS CODE
+  // 4. INTERFACE GRÁFICA
   // ==========================================
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -475,7 +470,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP: MORADORES E CONVITE VIA E-MAIL + CÓDIGO */}
+      {/* POPUP: MORADORES & CONVITE COM BOTÃO DE ENVIAR NOVAMENTE */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -494,7 +489,7 @@ function App() {
               </button>
             </div>
 
-            {/* SEÇÃO DE CONVITAR MORADOR (FORMULÁRIO DE DADOS E CÓDIGO) */}
+            {/* SEÇÃO DE CONVITE */}
             <div className="mb-6 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
               <h4 className="font-bold text-xs text-indigo-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <UserPlus className="w-4 h-4 text-indigo-600" /> Adicionar Novo Morador
@@ -529,15 +524,26 @@ function App() {
                 </form>
               ) : (
                 <form onSubmit={handleVerifyCode} className="space-y-3">
-                  <p className="text-xs text-slate-600">
-                    Insira o código de 6 dígitos enviado para <span className="font-bold text-indigo-700">{inviteEmail}</span>:
-                  </p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-slate-600">
+                      Código enviado para <span className="font-bold text-indigo-700">{inviteEmail}</span>
+                    </p>
+                    {/* Botão de Enviar Novamente */}
+                    <button
+                      type="button"
+                      onClick={handleSendInviteCode}
+                      className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-100 px-2.5 py-1 rounded-lg transition-all"
+                    >
+                      <RefreshCcw className="w-3 h-3" /> Enviar Novamente
+                    </button>
+                  </div>
+
                   <div className="flex gap-2">
                     <input
                       type="text"
                       required
                       maxLength="6"
-                      placeholder="Código (ex: 849201)"
+                      placeholder="Digite o código (6 dígitos)"
                       value={inputCode}
                       onChange={(e) => setInputCode(e.target.value)}
                       className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
