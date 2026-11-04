@@ -70,7 +70,7 @@ function App() {
   ];
 
   // ==========================================
-  // 2. ESTADOS DO APLICATIVO (STATE)
+  // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
     { id: 1, name: 'Arroz 5kg', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
@@ -93,7 +93,6 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Formulário do novo item
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
@@ -107,15 +106,20 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE SUPORTE E LÓGICA
+  // 3. FUNÇÃO DE NORMALIZAÇÃO (SEM ACENTOS E SEM DIFERENÇA DE CAIXA)
   // ==========================================
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
 
-  // Filtra as sugestões do autocomplete baseado no que o usuário digita no campo de nome
+  // Filtra sugestões ignorando maiúsculas, minúsculas e acentos incorretos
   const matchingPresets = newItem.name.trim() === '' ? [] : PRESET_PRODUCTS.filter(p => 
-    p.name.toLowerCase().includes(newItem.name.toLowerCase())
-  ).slice(0, 5); // Limita a 5 sugestões na tela
+    normalizeText(p.name).includes(normalizeText(newItem.name))
+  ).slice(0, 5);
 
-  // Seleciona uma sugestão da pré-visualização
   const handleSelectPreset = (preset) => {
     setNewItem({
       ...newItem,
@@ -157,7 +161,7 @@ function App() {
   };
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
     const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -229,7 +233,7 @@ function App() {
                   placeholder="Pesquisar mantimento..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
 
@@ -348,32 +352,32 @@ function App() {
             <h3 className="text-lg font-bold text-slate-800 mb-4">Adicionar Novo Mantimento</h3>
             
             <form onSubmit={handleAddItem} className="space-y-4">
-              {/* Campo de Nome com Pré-visualização (Autocomplete) */}
+              {/* Campo de Nome com Sugestões */}
               <div className="relative">
                 <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Digite para buscar sugestões)
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Digite sem acento ou minúsculo)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Arroz 5kg"
+                  placeholder="Ex: acucar, feijao, cafe..."
                   value={newItem.name}
                   onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
 
-                {/* Caixa de Pré-visualização / Sugestões em Tempo Real */}
+                {/* Lista suspensa de pré-visualização */}
                 {matchingPresets.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-lg z-20 overflow-hidden">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 overflow-hidden max-h-48 overflow-y-auto">
                     {matchingPresets.map((preset, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => handleSelectPreset(preset)}
-                        className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex justify-between items-center border-b border-slate-100 last:border-none"
+                        className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex justify-between items-center border-b border-slate-100 last:border-none transition-all"
                       >
-                        <span>{preset.name}</span>
-                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">{preset.category}</span>
+                        <span className="font-bold">{preset.name}</span>
+                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-semibold">{preset.category}</span>
                       </button>
                     ))}
                   </div>
@@ -382,7 +386,7 @@ function App() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Categoria</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Categoria (Tipo)</label>
                   <select
                     value={newItem.category}
                     onChange={(e) => setNewItem({...newItem, category: e.target.value})}
@@ -452,5 +456,5 @@ function App() {
   );
 }
 
-// Exportação padrão obrigatória no final
+// Exportação padrão obrigatória na última linha
 export default App;
