@@ -10,7 +10,6 @@ function App() {
   // 1. BASE DE DADOS DE PRODUTOS PRÉ-CADASTRADOS
   // ==========================================
   const PRESET_PRODUCTS = [
-    // Grãos e Massas
     { name: 'Arroz', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Feijão Carioca', category: 'Grãos', unit: 'pct', minQuantity: 2 },
     { name: 'Farinha de Trigo', category: 'Grãos', unit: 'pct', minQuantity: 1 },
@@ -22,19 +21,16 @@ function App() {
     { name: 'Tapioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Milho para Pipoca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
 
-    // Laticínios
     { name: 'Leite Integral', category: 'Laticínios', unit: 'un', minQuantity: 6 },
     { name: 'Manteiga / Margarina', category: 'Laticínios', unit: 'un', minQuantity: 1 },
     { name: 'Requeijão', category: 'Laticínios', unit: 'un', minQuantity: 1 },
     { name: 'Queijo Mussarela', category: 'Laticínios', unit: 'pct', minQuantity: 1 },
 
-    // Bebidas e Matinais
     { name: 'Café em Pó', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
     { name: 'Achocolatado em Pó', category: 'Bebidas', unit: 'un', minQuantity: 1 },
     { name: 'Chá', category: 'Bebidas', unit: 'cx', minQuantity: 1 },
     { name: 'Cereal Matinal / Granola', category: 'Bebidas', unit: 'pct', minQuantity: 1 },
 
-    // Temperos, Óleos e Condimentos
     { name: 'Óleo de Soja', category: 'Temperos', unit: 'un', minQuantity: 2 },
     { name: 'Azeite de Oliva', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Sal Refinado', category: 'Temperos', unit: 'pct', minQuantity: 1 },
@@ -48,13 +44,11 @@ function App() {
     { name: 'Maionese / Ketchup / Mostarda', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Molho Shoyu', category: 'Temperos', unit: 'un', minQuantity: 1 },
 
-    // Limpeza
     { name: 'Detergente Líquido', category: 'Limpeza', unit: 'un', minQuantity: 3 },
     { name: 'Sabão em Pó', category: 'Limpeza', unit: 'cx', minQuantity: 1 },
     { name: 'Papel Higiênico', category: 'Limpeza', unit: 'pct', minQuantity: 2 },
     { name: 'Esponja de Aço / Louça', category: 'Limpeza', unit: 'pct', minQuantity: 1 },
 
-    // Outros (Carnes, Açúcar, Congelados - com suporte ideal para KG ou UN)
     { name: 'Açúcar', category: 'Outros', unit: 'pct', minQuantity: 2 },
     { name: 'Pão de Forma', category: 'Outros', unit: 'pct', minQuantity: 2 },
     { name: 'Torradas', category: 'Outros', unit: 'pct', minQuantity: 1 },
@@ -80,13 +74,13 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
-    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' },
-    { id: 3, name: 'Leite Integral', category: 'Laticínios', quantity: 4, minQuantity: 6, unit: 'un', expiryDate: '2026-03-12', addedBy: 'Carlos' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 0, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' }, // Crítico/Vermelho
+    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' }, // Baixo/Amarelo
+    { id: 3, name: 'Leite Integral', category: 'Laticínios', quantity: 8, minQuantity: 6, unit: 'un', expiryDate: '2026-03-12', addedBy: 'Carlos' } // OK/Verde
   ]);
 
   const [shoppingList] = useState([
-    { id: 101, name: 'Leite Integral', quantityNeeded: 2, checked: false }
+    { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
   const [residents] = useState([
@@ -105,7 +99,7 @@ function App() {
     category: 'Grãos',
     quantity: 1,
     minQuantity: 1,
-    unit: 'un', // Padrão inicial
+    unit: 'un',
     expiryDate: '',
     addedBy: 'Vitor'
   });
@@ -113,7 +107,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE NORMALIZAÇÃO E BUSCA INTELIGENTE
+  // 3. FUNÇÕES DE NORMALIZAÇÃO E ORDENAÇÃO POR URGÊNCIA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -128,13 +122,10 @@ function App() {
     .sort((a, b) => {
       const nameA = normalizeText(a.name);
       const nameB = normalizeText(b.name);
-      
       const startsWithA = nameA.startsWith(query);
       const startsWithB = nameB.startsWith(query);
-
       if (startsWithA && !startsWithB) return -1;
       if (!startsWithA && startsWithB) return 1;
-
       return a.name.localeCompare(b.name, 'pt-BR');
     })
     .slice(0, 4);
@@ -179,13 +170,35 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
+  // ORDENAÇÃO INTELIGENTE POR URGÊNCIA (Vermelho > Amarelo > Verde) + Ordem Alfabética
   const filteredItems = items
     .filter(item => {
       const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
       const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
       return matchesSearch && matchesCategory;
     })
-    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    .sort((a, b) => {
+      // Função auxiliar para definir o nível de urgência
+      // 1 = Vermelho (Crítico / Zerado: quantity === 0)
+      // 2 = Amarelo (Estoque Baixo: quantity <= minQuantity)
+      // 3 = Verde (Tudo OK)
+      const getUrgencyLevel = (item) => {
+        if (item.quantity === 0) return 1;
+        if (item.quantity <= item.minQuantity) return 2;
+        return 3;
+      };
+
+      const urgencyA = getUrgencyLevel(a);
+      const urgencyB = getUrgencyLevel(b);
+
+      // Prioriza a urgência (1 vem antes de 2, que vem antes de 3)
+      if (urgencyA !== urgencyB) {
+        return urgencyA - urgencyB;
+      }
+
+      // Se a urgência for igual, ordena por ordem alfabética (A-Z)
+      return a.name.localeCompare(b.name, 'pt-BR');
+    });
 
   // ==========================================
   // 4. INTERFACE GRÁFICA (JSX)
@@ -295,22 +308,47 @@ function App() {
               )}
             </div>
 
-            {/* Grid de Itens */}
+            {/* Grid de Itens Organizado por Urgência (Vermelho no Topo, Amarelo no Meio, Verde embaixo) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => {
-                const isLow = item.quantity <= item.minQuantity;
+                const isCritical = item.quantity === 0;
+                const isLow = item.quantity > 0 && item.quantity <= item.minQuantity;
+
+                // Define estilos dinâmicos baseados no status de estoque
+                let cardStyle = "bg-white border-slate-100";
+                let badgeContent = null;
+
+                if (isCritical) {
+                  cardStyle = "border-rose-300 bg-rose-50/40 shadow-md ring-2 ring-rose-400/20"; // Vermelho (Crítico / Zerado)
+                  badgeContent = (
+                    <span className="flex items-center gap-1 text-[10px] font-black text-rose-700 bg-rose-100 px-2.5 py-1 rounded-xl uppercase tracking-wider animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Estoque Zerado / Crítico
+                    </span>
+                  );
+                } else if (isLow) {
+                  cardStyle = "border-amber-300 bg-amber-50/30"; // Amarelo (Estoque Baixo - Meio)
+                  badgeContent = (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-xl">
+                      <AlertTriangle className="w-3 h-3" /> Estoque Baixo
+                    </span>
+                  );
+                } else {
+                  cardStyle = "border-emerald-200 bg-white"; // Verde / Normal (Parte de baixo)
+                  badgeContent = (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-xl">
+                      <CheckCircle2 className="w-3 h-3" /> Estoque OK
+                    </span>
+                  );
+                }
+
                 return (
-                  <div key={item.id} className={`bg-white p-5 rounded-3xl border transition-all hover:shadow-md flex flex-col justify-between ${isLow ? 'border-amber-300 bg-amber-50/20' : 'border-slate-100'}`}>
+                  <div key={item.id} className={`p-5 rounded-3xl border transition-all hover:shadow-md flex flex-col justify-between ${cardStyle}`}>
                     <div>
                       <div className="flex justify-between items-start gap-2 mb-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-slate-100 text-slate-600 rounded-xl">
                           {item.category}
                         </span>
-                        {isLow && (
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-xl">
-                            <AlertTriangle className="w-3 h-3" /> Estoque Baixo
-                          </span>
-                        )}
+                        {badgeContent}
                       </div>
                       <h3 className="font-bold text-slate-800 text-base mb-1">{item.name}</h3>
                       <p className="text-xs text-slate-400 flex items-center gap-1 mb-4">
@@ -349,7 +387,7 @@ function App() {
               {shoppingList.map((shopItem) => (
                 <div key={shopItem.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <span className="font-bold text-sm text-slate-700">{shopItem.name}</span>
-                  <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-xl">Comprar: {shopItem.quantityNeeded} un</span>
+                  <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-xl">Comprar urgente</span>
                 </div>
               ))}
             </div>
@@ -377,7 +415,7 @@ function App() {
       </main>
 
       {/* ==========================================
-          5. MODAL DE ADICIONAR ITEM COM SELETOR DE UNIDADE
+          5. MODAL DE ADICIONAR ITEM
           ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -453,7 +491,6 @@ function App() {
                   />
                 </div>
 
-                {/* Seletor Interativo de Unidade (Unidade vs Quilo vs Outros) */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Unidade de Medida</label>
                   <div className="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200">
