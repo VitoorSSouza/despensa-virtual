@@ -6,7 +6,24 @@ import {
 } from 'lucide-react';
 
 function App() {
-  // Estado inicial dos produtos na despensa
+  // ==========================================
+  // 1. DADOS PRÉ-DEFINIDOS E ESTADOS INICIAIS
+  // ==========================================
+
+  // Lista de produtos pré-definidos para cadastro rápido no modal
+  const PRESET_PRODUCTS = [
+    { name: 'Arroz 5kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
+    { name: 'Feijão Carioca 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
+    { name: 'Macarrão Spagetti 500g', category: 'Grãos', unit: 'pct', minQuantity: 2 },
+    { name: 'Leite Integral 1L', category: 'Laticínios', unit: 'un', minQuantity: 6 },
+    { name: 'Manteiga 200g', category: 'Laticínios', unit: 'un', minQuantity: 1 },
+    { name: 'Azeite de Oliva 500ml', category: 'Temperos', unit: 'un', minQuantity: 1 },
+    { name: 'Café em Pó 500g', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
+    { name: 'Detergente Líquido 500ml', category: 'Limpeza', unit: 'un', minQuantity: 3 },
+    { name: 'Papel Higiênico 12un', category: 'Limpeza', unit: 'pct', minQuantity: 2 }
+  ];
+
+  // Estado inicial dos produtos cadastrados na despensa
   const [items, setItems] = useState([
     { id: 1, name: 'Arroz 5kg', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
     { id: 2, name: 'Feijão Carioca 1kg', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' },
@@ -15,25 +32,28 @@ function App() {
     { id: 5, name: 'Café em Pó 500g', category: 'Bebidas', quantity: 3, minQuantity: 2, unit: 'pct', expiryDate: '2026-10-05', addedBy: 'Ana' }
   ]);
 
-  // Lista de compras gerada (itens abaixo do mínimo)
+  // Lista de compras gerada (itens recomendados)
   const [shoppingList, setShoppingList] = useState([
     { id: 101, name: 'Leite Integral 1L', quantityNeeded: 2, checked: false },
     { id: 102, name: 'Feijão Carioca 1kg', quantityNeeded: 1, checked: false }
   ]);
 
-  // Moradores da república/casa
+  // Moradores da república / casa
   const [residents, setResidents] = useState([
     { id: 1, name: 'Vitor', avatar: '👨‍💻', balance: '+ R$ 15,00' },
     { id: 2, name: 'Ana', avatar: '👩‍🔬', balance: '- R$ 10,00' },
     { id: 3, name: 'Carlos', avatar: '👨‍🎨', balance: 'R$ 0,00' }
   ]);
 
-  const [activeTab, setActiveTab] = useState('pantry');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // ==========================================
+  // 2. ESTADOS DE CONTROLE DE INTERFACE
+  // ==========================================
+  const [activeTab, setActiveTab] = useState('pantry'); // Aba ativa ('pantry', 'shopping', 'residents')
+  const [searchTerm, setSearchTerm] = useState('');     // Termo de pesquisa na barra de busca
+  const [selectedCategory, setSelectedCategory] = useState('Todos'); // Filtro de categoria selecionado
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Controle de abertura do modal de cadastro
 
-  // Form state para novo item
+  // Estado do formulário para adicionar novo item
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
@@ -44,8 +64,25 @@ function App() {
     addedBy: 'Vitor'
   });
 
+  // Categorias disponíveis para filtro
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
+  // ==========================================
+  // 3. FUNÇÕES DE MANIPULAÇÃO DE DADOS (LOGIC)
+  // ==========================================
+
+  // Preenche automaticamente o formulário ao clicar em uma pré-definição
+  const handleSelectPreset = (preset) => {
+    setNewItem({
+      ...newItem,
+      name: preset.name,
+      category: preset.category,
+      unit: preset.unit,
+      minQuantity: preset.minQuantity
+    });
+  };
+
+  // Adiciona um novo item à despensa através do formulário
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItem.name) return;
@@ -58,10 +95,12 @@ function App() {
     };
 
     setItems([...items, itemToAdd]);
+    // Reseta o form e fecha o modal
     setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', expiryDate: '', addedBy: 'Vitor' });
     setIsAddModalOpen(false);
   };
 
+  // Altera a quantidade de um produto (incrementa ou decrementa)
   const updateQuantity = (id, delta) => {
     setItems(items.map(item => {
       if (item.id === id) {
@@ -72,21 +111,29 @@ function App() {
     }));
   };
 
+  // Remove um produto da despensa pelo ID
   const deleteItem = (id) => {
     setItems(items.filter(item => item.id !== id));
   };
 
+  // Filtra os itens com base na pesquisa de texto e categoria selecionada
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
+  // ==========================================
+  // 4. RENDERIZAÇÃO DA INTERFACE (JSX)
+  // ==========================================
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
-      {/* Header */}
+      
+      {/* Cabeçalho Superior */}
       <header className="bg-indigo-700 text-white shadow-lg sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          
+          {/* Logo e Título */}
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md">
               <Package className="w-7 h-7 text-indigo-200" />
@@ -99,7 +146,7 @@ function App() {
             </div>
           </div>
 
-          {/* Navegação por Abas */}
+          {/* Navegação por Abas (Despensa, Compras, Moradores) */}
           <nav className="flex bg-indigo-900/40 p-1.5 rounded-2xl gap-1 border border-indigo-600/30">
             <button
               onClick={() => setActiveTab('pantry')}
@@ -134,11 +181,14 @@ function App() {
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo Principal Dinâmico */}
       <main className="max-w-6xl mx-auto px-4 mt-8">
+        
+        {/* ABA 1: DESPENSA DE PRODUTOS */}
         {activeTab === 'pantry' && (
           <div className="space-y-6">
-            {/* Barra de Ações e Filtros */}
+            
+            {/* Barra de Pesquisa e Botão Novo Item */}
             <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -159,7 +209,7 @@ function App() {
               </button>
             </div>
 
-            {/* Categorias */}
+            {/* Filtros por Categoria */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
               {categories.map((cat) => (
                 <button
@@ -176,10 +226,10 @@ function App() {
               ))}
             </div>
 
-            {/* Grid de Produtos */}
+            {/* Grade (Grid) de Exibição dos Produtos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => {
-                const isLow = item.quantity <= item.minQuantity;
+                const isLow = item.quantity <= item.minQuantity; // Alerta se estoque estiver baixo
                 return (
                   <div 
                     key={item.id}
@@ -205,6 +255,7 @@ function App() {
                       </p>
                     </div>
 
+                    {/* Controles de Quantidade e Exclusão do Item */}
                     <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <button
@@ -239,6 +290,7 @@ function App() {
           </div>
         )}
 
+        {/* ABA 2: LISTA DE COMPRAS */}
         {activeTab === 'shopping' && (
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm max-w-2xl mx-auto">
             <div className="flex justify-between items-center mb-6">
@@ -273,11 +325,12 @@ function App() {
           </div>
         )}
 
+        {/* ABA 3: MORADORES E CONTROLE DE CONTAS */}
         {activeTab === 'residents' && (
           <div className="max-w-2xl mx-auto space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
               <h2 className="text-lg font-bold text-slate-800 mb-1">Moradores da Casa</h2>
-              <p className="text-xs text-slate-400 mb-6">Quem comprou o quê e divisão de contas</p>
+              <p className="text-xs text-slate-400 mb-6">Quem comprou o quê e divisão de saldos</p>
 
               <div className="space-y-3">
                 {residents.map((res) => (
@@ -303,12 +356,34 @@ function App() {
         )}
       </main>
 
-      {/* Modal de Adicionar Item */}
+      {/* ==========================================
+          5. MODAL DE ADICIONAR NOVO ITEM
+          ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Adicionar Novo Mantimento</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-2">Adicionar Novo Mantimento</h3>
             
+            {/* Atalhos de Pré-definições Rápidas */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-indigo-600 mb-1 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" /> Pré-definições Rápidas:
+              </label>
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {PRESET_PRODUCTS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectPreset(preset)}
+                    className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold rounded-lg whitespace-nowrap transition-all border border-indigo-100"
+                  >
+                    + {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Formulário de Cadastro */}
             <form onSubmit={handleAddItem} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Nome do Item</label>
@@ -394,4 +469,5 @@ function App() {
   );
 }
 
+// Exportação padrão do componente principal (obrigatória no final do arquivo)
 export default App;
