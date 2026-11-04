@@ -86,7 +86,6 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Salvar automaticamente no localStorage sempre que houver alterações
   useEffect(() => {
     localStorage.setItem('rep_items', JSON.stringify(items));
   }, [items]);
@@ -639,6 +638,7 @@ function App() {
                       type="text"
                       required
                       maxLength="6"
+                      autoComplete="one-time-code"
                       placeholder="Código (6 dígitos)"
                       value={inputCode}
                       onChange={(e) => setInputCode(e.target.value)}
@@ -926,7 +926,7 @@ function App() {
                   </p>
                 ) : (
                   <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
-                    {residents.link === undefined && residents.map((res) => {
+                    {residents.map((res) => {
                       const isSelected = newItem.splitWith.includes(res.id);
                       return (
                         <button
