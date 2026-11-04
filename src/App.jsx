@@ -94,10 +94,6 @@ function App() {
     localStorage.setItem('rep_residents', JSON.stringify(residents));
   }, [residents]);
 
-  const [shoppingList] = useState([
-    { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
-  ]);
-
   const [activePopup, setActivePopup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -224,12 +220,10 @@ function App() {
     setInviteError('');
   };
 
-  // 🔍 RECONHECEDOR INTELIGENTE DE PADRÃO DE NÚMEROS (REGEX)
   const handleSmartMessagePaste = (text) => {
-    // Procura por sequências de 4 a 6 números isolados no texto colado
     const match = text.match(/\b\d{4,6}\b/);
     if (match) {
-      setInputCode(match[0]); // Extrai e preenche o código automaticamente
+      setInputCode(match[0]);
     }
   };
 
@@ -284,6 +278,9 @@ function App() {
     return debt;
   };
 
+  // Quantidade real de itens abaixo do estoque mínimo
+  const shoppingCount = items.filter(i => i.quantity <= i.minQuantity).length;
+
   const filteredItems = items
     .filter(item => {
       const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
@@ -337,9 +334,9 @@ function App() {
             >
               <div className="relative">
                 <ShoppingCart className="w-5 h-5" />
-                {shoppingList.length > 0 && (
+                {shoppingCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
-                    {shoppingList.length}
+                    {shoppingCount}
                   </span>
                 )}
               </div>
@@ -556,7 +553,7 @@ function App() {
             </div>
 
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-              {items.filter(i => i.quantity <= i.minQuantity).length === 0 ? (
+              {shoppingCount === 0 ? (
                 <p className="text-center py-8 text-xs font-semibold text-slate-400">Tudo abastecido! Nenhum item em falta no momento. 🎉</p>
               ) : (
                 items.filter(i => i.quantity <= i.minQuantity).map((shopItem) => (
@@ -641,7 +638,6 @@ function App() {
                     </button>
                   </div>
 
-                  {/* CAMPO INTELIGENTE DE SIMULAÇÃO DE MENSAGEM/SMS */}
                   <div>
                     <label className="block text-[10px] font-bold text-indigo-900 uppercase tracking-wider mb-1 flex items-center gap-1">
                       <Wand2 className="w-3 h-3 text-indigo-600" /> Simular recebimento (Cole a mensagem aqui):
