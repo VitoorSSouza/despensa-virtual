@@ -3,7 +3,7 @@ import {
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
   Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save,
-  UserX, ShieldAlert, Check, Wand2
+  UserX, ShieldAlert, Check, Wand2, Clock, Play
 } from 'lucide-react';
 
 function App() {
@@ -77,7 +77,7 @@ function App() {
   const [items, setItems] = useState(() => {
     const saved = localStorage.getItem('rep_items');
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitWith: [], expiryDate: '2026-08-15', addedBy: 'Admin' }
+      { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitWith: [], expiryDate: '2026-08-15', addedBy: 'Admin', inQuarantine: false }
     ];
   });
 
@@ -118,7 +118,8 @@ function App() {
     price: '',
     splitWith: [],
     expiryDate: '',
-    addedBy: 'Admin'
+    addedBy: 'Admin',
+    inQuarantine: false
   });
 
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
@@ -186,11 +187,12 @@ function App() {
       quantity: Number(newItem.quantity),
       minQuantity: Number(newItem.minQuantity),
       price: newItem.price ? Number(newItem.price) : 0,
-      splitWith: newItem.splitWith || []
+      splitWith: newItem.splitWith || [],
+      inQuarantine: false
     };
 
     setItems([...items, itemToAdd]);
-    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitWith: [], expiryDate: '', addedBy: 'Admin' });
+    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitWith: [], expiryDate: '', addedBy: 'Admin', inQuarantine: false });
     setIsAddModalOpen(false);
   };
 
@@ -256,7 +258,18 @@ function App() {
     setItems(items.map(item => {
       if (item.id === id) {
         const newQty = Math.max(0, item.quantity + delta);
-        return { ...item, quantity: newQty };
+        // Se aumentou o estoque acima de 0, tira automaticamente da quarentena
+        const inQuarantine = newQty > 0 ? false : item.inQuarantine;
+        return { ...item, quantity: newQty, inQuarantine };
+      }
+      return item;
+    }));
+  };
+
+  const toggleQuarantine = (id) => {
+    setItems(items.map(item => {
+      if (item.id === id) {
+        return { ...item, inQuarantine: !item.inQuarantine };
       }
       return item;
     }));
@@ -278,8 +291,8 @@ function App() {
     return debt;
   };
 
-  // Quantidade real de itens abaixo do estoque mínimo
-  const shoppingCount = items.filter(i => i.quantity <= i.minQuantity).length;
+  // Conta apenas itens zerados E que NÃO estão em quarentena
+  const shoppingCount = items.filter(i => i.quantity === 0 && !i.inQuarantine).length;
 
   const filteredItems = items
     .filter(item => {
@@ -289,9 +302,10 @@ function App() {
     })
     .sort((a, b) => {
       const getUrgencyLevel = (item) => {
-        if (item.quantity === 0) return 1;
-        if (item.quantity <= item.minQuantity) return 2;
-        return 3;
+        if (item.quantity === 0 && !item.inQuarantine) return 1;
+        if (item.quantity === 0 && item.inQuarantine) return 2;
+        if (item.quantity <= item.minQuantity) return 3;
+        return 4;
       };
       const urgencyA = getUrgencyLevel(a);
       const urgencyB = getUrgencyLevel(b);
@@ -440,12 +454,21 @@ function App() {
               let badgeContent = null;
 
               if (isCritical) {
-                cardStyle = "border-rose-300 bg-rose-50/40 shadow-md ring-2 ring-rose-400/20";
-                badgeContent = (
-                  <span className="flex items-center gap-1 text-[10px] font-black text-rose-700 bg-rose-100 px-2.5 py-1 rounded-xl uppercase tracking-wider animate-pulse">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Estoque Zerado
-                  </span>
-                );
+                if (item.inQuarantine) {
+                  cardStyle = "border-amber-200 bg-amber-50/20";
+                  badgeContent = (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-xl">
+                      <Clock className="w-3.5 h-3.5" /> Em Quarentena
+                    </span>
+                  );
+                } else {
+                  cardStyle = "border-rose-300 bg-rose-50/40 shadow-md ring-2 ring-rose-400/20";
+                  badgeContent = (
+                    <span className="flex items-center gap-1 text-[10px] font-black text-rose-700 bg-rose-100 px-2.5 py-1 rounded-xl uppercase tracking-wider animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Estoque Zerado
+                    </span>
+                  );
+                }
               } else if (isLow) {
                 cardStyle = "border-amber-300 bg-amber-50/30";
                 badgeContent = (
@@ -509,22 +532,46 @@ function App() {
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
-                        <Minus className="w-3.5 h-3.5" />
+                  <div>
+                    {/* Botão de Quarentena para itens zerados */}
+                    {item.quantity === 0 && (
+                      <button
+                        onClick={() => toggleQuarantine(item.id)}
+                        className={`w-full mb-3 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+                          item.inQuarantine
+                            ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {item.inQuarantine ? (
+                          <>
+                            <Play className="w-3.5 h-3.5 text-amber-700" /> Tirar da Quarentena (Reativar Alerta)
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3.5 h-3.5 text-slate-500" /> Colocar em Quarentena (Pausar Compras)
+                          </>
+                        )}
                       </button>
-                      <span className="font-black text-lg text-slate-800 min-w-[2rem] text-center">
-                        {item.quantity} <span className="text-xs font-medium text-slate-400">{item.unit}</span>
-                      </span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
-                        <Plus className="w-3.5 h-3.5" />
+                    )}
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-black text-lg text-slate-800 min-w-[2rem] text-center">
+                          {item.quantity} <span className="text-xs font-medium text-slate-400">{item.unit}</span>
+                        </span>
+                        <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <button onClick={() => deleteItem(item.id)} className="text-slate-300 hover:text-rose-500 p-2 rounded-xl transition-all">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-
-                    <button onClick={() => deleteItem(item.id)} className="text-slate-300 hover:text-rose-500 p-2 rounded-xl transition-all">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               );
@@ -544,7 +591,7 @@ function App() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">Lista de Compras Automática</h3>
-                  <p className="text-xs text-slate-400">Itens urgentes ou zerados no estoque</p>
+                  <p className="text-xs text-slate-400">Itens com estoque zerado e fora da quarentena</p>
                 </div>
               </div>
               <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -554,15 +601,24 @@ function App() {
 
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {shoppingCount === 0 ? (
-                <p className="text-center py-8 text-xs font-semibold text-slate-400">Tudo abastecido! Nenhum item em falta no momento. 🎉</p>
+                <p className="text-center py-8 text-xs font-semibold text-slate-400">Tudo abastecido ou em quarentena! Nenhum item urgente no momento. 🎉</p>
               ) : (
-                items.filter(i => i.quantity <= i.minQuantity).map((shopItem) => (
+                items.filter(i => i.quantity === 0 && !i.inQuarantine).map((shopItem) => (
                   <div key={shopItem.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <div>
                       <h4 className="font-bold text-sm text-slate-800">{shopItem.name}</h4>
-                      <p className="text-[11px] text-slate-400">Atual: {shopItem.quantity} {shopItem.unit} (Mínimo: {shopItem.minQuantity})</p>
+                      <p className="text-[11px] text-slate-400">Atual: 0 {shopItem.unit} (Mínimo recomendado: {shopItem.minQuantity})</p>
                     </div>
-                    <span className="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-xl">Comprar urgente</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleQuarantine(shopItem.id)}
+                        className="text-[11px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition-all"
+                        title="Pausar este item"
+                      >
+                        Quarentena
+                      </button>
+                      <span className="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1.5 rounded-xl">Comprar urgente</span>
+                    </div>
                   </div>
                 ))
               )}
