@@ -287,7 +287,6 @@ function App() {
   const shoppingListItems = items
     .filter(i => i.quantity <= i.minQuantity)
     .sort((a, b) => {
-      // Se a quantidade de 'a' é 0 e 'b' > 0, 'a' vem primeiro (topo)
       if (a.quantity === 0 && b.quantity > 0) return -1;
       if (a.quantity > 0 && b.quantity === 0) return 1;
       return 0;
@@ -706,8 +705,8 @@ function App() {
               )}
             </div>
 
-            {/* LISTA DE MORADORES */}
-            <div className="space-y-3 max-h-60 overflow-y-auto">
+            {/* LISTA DE MORADORES (Com limite de 5 visíveis e rolagem após isso) */}
+            <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
               {residents.length === 0 ? (
                 <div className="text-center py-8 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <UserX className="w-8 h-8 text-slate-400 mx-auto mb-2" />
