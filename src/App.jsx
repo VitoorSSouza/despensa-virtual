@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
-  Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid
+  Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
+  Mail, KeyRound, UserPlus
 } from 'lucide-react';
 
 function App() {
@@ -82,10 +83,11 @@ function App() {
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
-  const [residents] = useState([
-    { id: 1, name: 'Vitor', avatar: '👨‍💻', balance: '+ R$ 15,00' },
-    { id: 2, name: 'Ana', avatar: '👩‍🔬', balance: '- R$ 10,00' },
-    { id: 3, name: 'Carlos', avatar: '👨‍🎨', balance: 'R$ 0,00' }
+  // Lista de Moradores
+  const [residents, setResidents] = useState([
+    { id: 1, name: 'Vitor', email: 'vitor@rep.com', avatar: '👨‍💻', balance: '+ R$ 15,00' },
+    { id: 2, name: 'Ana', email: 'ana@rep.com', avatar: '👩‍🔬', balance: '- R$ 10,00' },
+    { id: 3, name: 'Carlos', email: 'carlos@rep.com', avatar: '👨‍🎨', balance: 'R$ 0,00' }
   ]);
 
   // Modais estilo Popup
@@ -93,6 +95,14 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Estados do sistema de convite de morador por e-mail e código
+  const [inviteStep, setInviteStep] = useState(1); // 1 = Digitar E-mail, 2 = Digitar Código
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [inputCode, setInputCode] = useState('');
+  const [inviteError, setInviteError] = useState('');
 
   const [newItem, setNewItem] = useState({
     name: '',
@@ -107,7 +117,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE NORMALIZAÇÃO E BUSCA
+  // 3. FUNÇÕES DE SUPORTE E CONVITE
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -156,6 +166,48 @@ function App() {
     setIsAddModalOpen(false);
   };
 
+  // Gerar e Enviar Código de Validação por E-mail
+  const handleSendInviteCode = (e) => {
+    e.preventDefault();
+    if (!inviteEmail || !inviteName) return;
+
+    // Gera um código de 6 dígitos aleatório
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    setInviteStep(2);
+    setInviteError('');
+
+    // Alerta informativo simulando a caixa de entrada
+    alert(`⚡ [Simulação de Envio de E-mail]\n\nUm e-mail foi enviado para: ${inviteEmail}\nSeu código de acesso é: ${code}`);
+  };
+
+  // Confirmar Código digitado pelo morador
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    if (inputCode === generatedCode) {
+      const avatars = ['🧑‍💻', '👩‍💻', '👨‍🌾', '👩‍🍳', '👨‍🎓', '👩‍🎨'];
+      const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
+      const newResident = {
+        id: Date.now(),
+        name: inviteName,
+        email: inviteEmail,
+        avatar: randomAvatar,
+        balance: 'R$ 0,00'
+      };
+
+      setResidents([...residents, newResident]);
+      setInviteStep(1);
+      setInviteEmail('');
+      setInviteName('');
+      setInputCode('');
+      setGeneratedCode('');
+      alert('✅ Morador validado e adicionado com sucesso!');
+    } else {
+      setInviteError('Código incorreto. Verifique o código e tente novamente.');
+    }
+  };
+
   const updateQuantity = (id, delta) => {
     setItems(items.map(item => {
       if (item.id === id) {
@@ -170,7 +222,6 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  // Ordenação por Urgência (Vermelho > Amarelo > Verde)
   const filteredItems = items
     .filter(item => {
       const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
@@ -190,27 +241,22 @@ function App() {
     });
 
   // ==========================================
-  // 4. INTERFACE GRÁFICA COM SIDEBAR ESTILO VS CODE
+  // 4. INTERFACE GRÁFICA COM SIDEBAR VS CODE
   // ==========================================
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       
-      {/* SIDEBAR ESTILO VS CODE (FIXA NA ESQUERDA) */}
+      {/* SIDEBAR ESTILO VS CODE */}
       <aside className="w-16 md:w-20 bg-slate-900 text-slate-400 flex flex-col justify-between items-center py-4 border-r border-slate-800 shrink-0 z-40">
-        
-        {/* Topo / Logo */}
         <div className="flex flex-col items-center gap-6 w-full">
           <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg shadow-indigo-900/50">
             <Package className="w-6 h-6" />
           </div>
 
-          {/* Botões de Ação na Esquerda */}
           <nav className="flex flex-col gap-3 w-full px-2">
-            
-            {/* Botão Despensa (Visão Principal) */}
             <button
               onClick={() => setActivePopup(null)}
-              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all group relative ${
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all relative ${
                 activePopup === null ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'hover:bg-slate-800 hover:text-slate-200'
               }`}
               title="Despensa"
@@ -220,10 +266,9 @@ function App() {
               {activePopup === null && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full" />}
             </button>
 
-            {/* Botão Compras (Popup) */}
             <button
               onClick={() => setActivePopup(activePopup === 'shopping' ? null : 'shopping')}
-              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all group relative ${
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all relative ${
                 activePopup === 'shopping' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'hover:bg-slate-800 hover:text-slate-200'
               }`}
               title="Lista de Compras"
@@ -240,10 +285,9 @@ function App() {
               {activePopup === 'shopping' && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full" />}
             </button>
 
-            {/* Botão Moradores (Popup) */}
             <button
               onClick={() => setActivePopup(activePopup === 'residents' ? null : 'residents')}
-              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all group relative ${
+              className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all relative ${
                 activePopup === 'residents' ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' : 'hover:bg-slate-800 hover:text-slate-200'
               }`}
               title="Moradores"
@@ -255,7 +299,6 @@ function App() {
           </nav>
         </div>
 
-        {/* Botão Adicionar Item no Rodapé da Sidebar */}
         <button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-md active:scale-95 flex flex-col items-center"
@@ -266,10 +309,8 @@ function App() {
         </button>
       </aside>
 
-      {/* ÁREA PRINCIPAL DA DESPENSA (Fica sempre visível ao fundo) */}
+      {/* ÁREA PRINCIPAL DA DESPENSA */}
       <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-        
-        {/* Cabeçalho Interno */}
         <div className="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
@@ -287,8 +328,6 @@ function App() {
         </div>
 
         <div className="max-w-6xl mx-auto space-y-6">
-          
-          {/* Barra de Pesquisa */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -300,7 +339,6 @@ function App() {
             />
           </div>
 
-          {/* Categorias e Limpeza */}
           <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
             <div className="flex gap-2">
               {categories.map((cat) => (
@@ -399,7 +437,7 @@ function App() {
         </div>
       </main>
 
-      {/* POPUP / MODAL: LISTA DE COMPRAS */}
+      {/* POPUP: COMPRAS */}
       {activePopup === 'shopping' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -413,10 +451,7 @@ function App() {
                   <p className="text-xs text-slate-400">Itens urgentes ou zerados no estoque</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setActivePopup(null)}
-                className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl"
-              >
+              <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -431,9 +466,7 @@ function App() {
                       <h4 className="font-bold text-sm text-slate-800">{shopItem.name}</h4>
                       <p className="text-[11px] text-slate-400">Atual: {shopItem.quantity} {shopItem.unit} (Mínimo: {shopItem.minQuantity})</p>
                     </div>
-                    <span className="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-xl">
-                      Comprar urgente
-                    </span>
+                    <span className="text-xs font-bold bg-rose-100 text-rose-700 px-3 py-1 rounded-xl">Comprar urgente</span>
                   </div>
                 ))
               )}
@@ -442,7 +475,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP / MODAL: MORADORES */}
+      {/* POPUP: MORADORES E CONVITE VIA E-MAIL + CÓDIGO */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -452,26 +485,84 @@ function App() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Moradores & Divisão de Contas</h3>
-                  <p className="text-xs text-slate-400">Saldos da república</p>
+                  <h3 className="text-lg font-bold text-slate-800">Moradores da Casa</h3>
+                  <p className="text-xs text-slate-400">Convide novos membros por e-mail com código de acesso</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setActivePopup(null)}
-                className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl"
-              >
+              <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            {/* SEÇÃO DE CONVITAR MORADOR (FORMULÁRIO DE DADOS E CÓDIGO) */}
+            <div className="mb-6 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+              <h4 className="font-bold text-xs text-indigo-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4 text-indigo-600" /> Adicionar Novo Morador
+              </h4>
+
+              {inviteStep === 1 ? (
+                <form onSubmit={handleSendInviteCode} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nome do morador"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <input
+                      type="email"
+                      required
+                      placeholder="E-mail (ex: lucas@gmail.com)"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold transition-all"
+                  >
+                    <Mail className="w-3.5 h-3.5" /> Enviar Código de Validação
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyCode} className="space-y-3">
+                  <p className="text-xs text-slate-600">
+                    Insira o código de 6 dígitos enviado para <span className="font-bold text-indigo-700">{inviteEmail}</span>:
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      maxLength="6"
+                      placeholder="Código (ex: 849201)"
+                      value={inputCode}
+                      onChange={(e) => setInputCode(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" /> Confirmar
+                    </button>
+                  </div>
+                  {inviteError && <p className="text-[11px] font-bold text-rose-600">{inviteError}</p>}
+                </form>
+              )}
+            </div>
+
+            {/* LISTA DE MORADORES */}
+            <div className="space-y-3 max-h-60 overflow-y-auto">
               {residents.map((res) => (
-                <div key={res.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div key={res.id} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{res.avatar}</span>
                     <div>
                       <h4 className="font-bold text-sm text-slate-800">{res.name}</h4>
-                      <p className="text-xs text-slate-400">Morador Ativo</p>
+                      <p className="text-[11px] text-slate-400">{res.email || 'Cadastrado'}</p>
                     </div>
                   </div>
                   <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700">
