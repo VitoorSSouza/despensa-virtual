@@ -3,7 +3,7 @@ import {
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
   Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split, Edit3, Save,
-  UserX, ShieldAlert, Check
+  UserX, ShieldAlert, Check, Wand2
 } from 'lucide-react';
 
 function App() {
@@ -219,10 +219,18 @@ function App() {
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedCode(code);
+    setInputCode(code); 
     setInviteStep(2);
     setInviteError('');
+  };
 
-    alert(`⚡ [Código de Validação por E-mail]\n\nE-mail: ${inviteEmail}\nSeu código de acesso: ${code}`);
+  // 🔍 RECONHECEDOR INTELIGENTE DE PADRÃO DE NÚMEROS (REGEX)
+  const handleSmartMessagePaste = (text) => {
+    // Procura por sequências de 4 a 6 números isolados no texto colado
+    const match = text.match(/\b\d{4,6}\b/);
+    if (match) {
+      setInputCode(match[0]); // Extrai e preenche o código automaticamente
+    }
   };
 
   const handleVerifyCode = (e) => {
@@ -622,15 +630,28 @@ function App() {
                 <form onSubmit={handleVerifyCode} className="space-y-3">
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-600">
-                      Código enviado para <span className="font-bold text-indigo-700">{inviteEmail}</span>
+                      Código gerado para <span className="font-bold text-indigo-700">{inviteEmail}</span>
                     </p>
                     <button
                       type="button"
                       onClick={handleSendInviteCode}
                       className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-100 px-2.5 py-1 rounded-lg transition-all"
                     >
-                      <RefreshCcw className="w-3 h-3" /> Enviar Novamente
+                      <RefreshCcw className="w-3 h-3" /> Gerar Novo
                     </button>
+                  </div>
+
+                  {/* CAMPO INTELIGENTE DE SIMULAÇÃO DE MENSAGEM/SMS */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-indigo-900 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Wand2 className="w-3 h-3 text-indigo-600" /> Simular recebimento (Cole a mensagem aqui):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Seu codigo de acesso e 849201"
+                      onChange={(e) => handleSmartMessagePaste(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 mb-2"
+                    />
                   </div>
 
                   <div className="flex gap-2">
