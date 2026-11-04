@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
@@ -72,18 +72,32 @@ function App() {
   ];
 
   // ==========================================
-  // 2. ESTADOS DO APLICATIVO
+  // 2. ESTADOS COM PERSISTÊNCIA (LOCALSTORAGE)
   // ==========================================
-  const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitWith: [], expiryDate: '2026-08-15', addedBy: 'Admin' }
-  ]);
+  const [items, setItems] = useState(() => {
+    const saved = localStorage.getItem('rep_items');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 26.00, splitWith: [], expiryDate: '2026-08-15', addedBy: 'Admin' }
+    ];
+  });
+
+  const [residents, setResidents] = useState(() => {
+    const saved = localStorage.getItem('rep_residents');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Salvar automaticamente no localStorage sempre que houver alterações
+  useEffect(() => {
+    localStorage.setItem('rep_items', JSON.stringify(items));
+  }, [items]);
+
+  useEffect(() => {
+    localStorage.setItem('rep_residents', JSON.stringify(residents));
+  }, [residents]);
 
   const [shoppingList] = useState([
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
-
-  // Moradores cadastrados (inicia vazio para ir adicionando)
-  const [residents, setResidents] = useState([]);
 
   const [activePopup, setActivePopup] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,7 +114,6 @@ function App() {
   const [inputCode, setInputCode] = useState('');
   const [inviteError, setInviteError] = useState('');
 
-  // Novo item: splitWith armazena os IDs dos moradores que vão dividir este item
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
@@ -149,7 +162,6 @@ function App() {
     });
   };
 
-  // Alternar seleção de morador para divisão do novo item
   const toggleSplitMemberNew = (residentId) => {
     const current = newItem.splitWith;
     if (current.includes(residentId)) {
@@ -159,7 +171,6 @@ function App() {
     }
   };
 
-  // Alternar seleção de morador para divisão do item em edição
   const toggleSplitMemberEdit = (residentId) => {
     if (!editingItem) return;
     const current = editingItem.splitWith || [];
@@ -254,7 +265,6 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  // Cálculo de quanto cada morador específico deve somando os itens em que ele foi incluído
   const calculateResidentDebt = (residentId) => {
     let debt = 0;
     items.forEach(item => {
@@ -364,7 +374,7 @@ function App() {
         <div className="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-              Dispensa Virtual <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full">Acadêmico</span>
+              Dispensa Virtual <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full">Salvo no Navegador</span>
             </h1>
             <p className="text-xs text-slate-400">Gestão inteligente de mantimentos e divisão personalizada de custos</p>
           </div>
@@ -735,7 +745,6 @@ function App() {
                 />
               </div>
 
-              {/* SELEÇÃO ESPECÍFICA DE QUEM VAI DIVIDIR ESTE ITEM */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
                   <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir com quais moradores?
@@ -907,7 +916,6 @@ function App() {
                 />
               </div>
 
-              {/* SELEÇÃO ESPECÍFICA DE QUEM VAI DIVIDIR O NOVO ITEM */}
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
                   <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir com quais moradores?
@@ -918,7 +926,7 @@ function App() {
                   </p>
                 ) : (
                   <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200 max-h-40 overflow-y-auto">
-                    {residents.map((res) => {
+                    {residents.link === undefined && residents.map((res) => {
                       const isSelected = newItem.splitWith.includes(res.id);
                       return (
                         <button
