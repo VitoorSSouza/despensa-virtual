@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Package, ShoppingCart, Users, AlertTriangle, CheckCircle2, 
   Plus, Minus, Trash2, Calendar, Search, Sparkles, X, LayoutGrid,
-  Mail, KeyRound, UserPlus, RefreshCcw
+  Mail, KeyRound, UserPlus, RefreshCcw, DollarSign, Split
 } from 'lucide-react';
 
 function App() {
@@ -74,19 +74,17 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 0, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
-    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' },
-    { id: 3, name: 'Leite Integral', category: 'Laticínios', quantity: 8, minQuantity: 6, unit: 'un', expiryDate: '2026-03-12', addedBy: 'Carlos' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', price: 25.00, splitCount: 1, expiryDate: '2026-08-15', addedBy: 'Vitor' },
+    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', price: 9.50, splitCount: 2, expiryDate: '2026-05-10', addedBy: 'Ana' }
   ]);
 
   const [shoppingList] = useState([
     { id: 101, name: 'Arroz', quantityNeeded: 1, checked: false }
   ]);
 
+  // Lista de moradores iniciada limpa (sem presets fictícios)
   const [residents, setResidents] = useState([
-    { id: 1, name: 'Vitor', email: 'vitor@rep.com', avatar: '👨‍💻', balance: '+ R$ 15,00' },
-    { id: 2, name: 'Ana', email: 'ana@rep.com', avatar: '👩‍🔬', balance: '- R$ 10,00' },
-    { id: 3, name: 'Carlos', email: 'carlos@rep.com', avatar: '👨‍🎨', balance: 'R$ 0,00' }
+    { id: 1, name: 'Vitor (Você)', email: 'vitor@rep.com', avatar: '👨‍💻', balance: 'R$ 0,00' }
   ]);
 
   const [activePopup, setActivePopup] = useState(null);
@@ -102,12 +100,15 @@ function App() {
   const [inputCode, setInputCode] = useState('');
   const [inviteError, setInviteError] = useState('');
 
+  // Estado do formulário com preço e divisão
   const [newItem, setNewItem] = useState({
     name: '',
     category: 'Grãos',
     quantity: 1,
     minQuantity: 1,
     unit: 'un',
+    price: '',
+    splitCount: 1, // 1 = Individual, 2+ = Dividido entre X pessoas
     expiryDate: '',
     addedBy: 'Vitor'
   });
@@ -115,7 +116,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE SUPORTE E CONVITE
+  // 3. FUNÇÕES DE SUPORTE E LÓGICA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -156,15 +157,16 @@ function App() {
       id: Date.now(),
       ...newItem,
       quantity: Number(newItem.quantity),
-      minQuantity: Number(newItem.minQuantity)
+      minQuantity: Number(newItem.minQuantity),
+      price: newItem.price ? Number(newItem.price) : 0,
+      splitCount: Number(newItem.splitCount)
     };
 
     setItems([...items, itemToAdd]);
-    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', expiryDate: '', addedBy: 'Vitor' });
+    setNewItem({ name: '', category: 'Grãos', quantity: 1, minQuantity: 1, unit: 'un', price: '', splitCount: 1, expiryDate: '', addedBy: 'Vitor' });
     setIsAddModalOpen(false);
   };
 
-  // Enviar ou Reenviar Código de Validação
   const handleSendInviteCode = (e) => {
     e.preventDefault();
     if (!inviteEmail || !inviteName) return;
@@ -174,7 +176,7 @@ function App() {
     setInviteStep(2);
     setInviteError('');
 
-    alert(`⚡ [E-mail Reenviado / Enviado]\n\nE-mail para: ${inviteEmail}\nCódigo de acesso: ${code}`);
+    alert(`⚡ [Código de Validação por E-mail]\n\nE-mail: ${inviteEmail}\nSeu código de acesso: ${code}`);
   };
 
   const handleVerifyCode = (e) => {
@@ -287,7 +289,12 @@ function App() {
               }`}
               title="Moradores"
             >
-              <Users className="w-5 h-5" />
+              <div className="relative">
+                <Users className="w-5 h-5" />
+                <span className="absolute -top-1.5 -right-2 bg-indigo-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                  {residents.length}
+                </span>
+              </div>
               <span className="text-[10px] font-bold mt-1 hidden md:block">Moradores</span>
               {activePopup === 'residents' && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full" />}
             </button>
@@ -311,7 +318,7 @@ function App() {
             <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
               Dispensa Virtual <span className="text-xs bg-indigo-100 text-indigo-700 font-bold px-2.5 py-0.5 rounded-full">Acadêmico</span>
             </h1>
-            <p className="text-xs text-slate-400">Gestão inteligente de mantimentos e tarefas da casa</p>
+            <p className="text-xs text-slate-400">Gestão inteligente de mantimentos e divisão de custos</p>
           </div>
 
           <button
@@ -361,7 +368,7 @@ function App() {
             )}
           </div>
 
-          {/* Grid de Produtos */}
+          {/* Grid de Produtos com Preço e Divisão */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredItems.map((item) => {
               const isCritical = item.quantity === 0;
@@ -393,6 +400,10 @@ function App() {
                 );
               }
 
+              const unitPrice = item.price ? Number(item.price) : 0;
+              const split = item.splitCount > 1 ? item.splitCount : 1;
+              const pricePerPerson = unitPrice > 0 ? (unitPrice / split).toFixed(2) : '0,00';
+
               return (
                 <div key={item.id} className={`p-5 rounded-3xl border transition-all hover:shadow-md flex flex-col justify-between ${cardStyle}`}>
                   <div>
@@ -403,6 +414,21 @@ function App() {
                       {badgeContent}
                     </div>
                     <h3 className="font-bold text-slate-800 text-base mb-1">{item.name}</h3>
+                    
+                    {/* Exibição de Preço e Divisão no Card */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {unitPrice > 0 && (
+                        <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                          <DollarSign className="w-3 h-3" /> R$ {unitPrice.toFixed(2)}
+                        </span>
+                      )}
+                      {split > 1 && (
+                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 flex items-center gap-1">
+                          <Split className="w-3 h-3" /> Div: {split}p (R$ {pricePerPerson}/pes)
+                        </span>
+                      )}
+                    </div>
+
                     <p className="text-xs text-slate-400 flex items-center gap-1 mb-4">
                       <Calendar className="w-3.5 h-3.5" /> Validade: {item.expiryDate || 'Não informada'}
                     </p>
@@ -470,7 +496,7 @@ function App() {
         </div>
       )}
 
-      {/* POPUP: MORADORES & CONVITE COM BOTÃO DE ENVIAR NOVAMENTE */}
+      {/* POPUP: MORADORES & CONVITE */}
       {activePopup === 'residents' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl animate-in fade-in zoom-in duration-200 border border-slate-100">
@@ -480,8 +506,8 @@ function App() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Moradores da Casa</h3>
-                  <p className="text-xs text-slate-400">Convide novos membros por e-mail com código de acesso</p>
+                  <h3 className="text-lg font-bold text-slate-800">Moradores da Casa ({residents.length})</h3>
+                  <p className="text-xs text-slate-400">Gerencie os membros ativos da república</p>
                 </div>
               </div>
               <button onClick={() => setActivePopup(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -528,7 +554,6 @@ function App() {
                     <p className="text-xs text-slate-600">
                       Código enviado para <span className="font-bold text-indigo-700">{inviteEmail}</span>
                     </p>
-                    {/* Botão de Enviar Novamente */}
                     <button
                       type="button"
                       onClick={handleSendInviteCode}
@@ -543,7 +568,7 @@ function App() {
                       type="text"
                       required
                       maxLength="6"
-                      placeholder="Digite o código (6 dígitos)"
+                      placeholder="Código (6 dígitos)"
                       value={inputCode}
                       onChange={(e) => setInputCode(e.target.value)}
                       className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
@@ -581,7 +606,7 @@ function App() {
         </div>
       )}
 
-      {/* MODAL DE ADICIONAR ITEM */}
+      {/* MODAL DE ADICIONAR ITEM COM PREÇO E DIVISÃO */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
@@ -672,6 +697,41 @@ function App() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* SEÇÃO DE PREÇO E DIVISÃO DE CONTAS */}
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Preço Total (R$)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Ex: 25.00"
+                    value={newItem.price}
+                    onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                    <Split className="w-3.5 h-3.5 text-indigo-600" /> Dividir entre (Pessoas)
+                  </label>
+                  <select
+                    value={newItem.splitCount}
+                    onChange={(e) => setNewItem({...newItem, splitCount: Number(e.target.value)})}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  >
+                    <option value={1}>Não dividir (1 pessoa)</option>
+                    {/* Gera opções dinâmicas de 2 até o total de moradores cadastrados (mínimo 2, máximo residents.length) */}
+                    {Array.from({ length: Math.max(1, residents.length - 1) }, (_, i) => i + 2).map((num) => (
+                      <option key={num} value={num}>Dividir entre {num} pessoas</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
