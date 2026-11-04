@@ -106,7 +106,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÃO DE NORMALIZAÇÃO (SEM ACENTOS E SEM DIFERENÇA DE CAIXA)
+  // 3. NORMALIZAÇÃO E ORDENAÇÃO ALFABÉTICA DA BUSCA
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -115,10 +115,25 @@ function App() {
       .replace(/[\u0300-\u036f]/g, '');
   };
 
-  // Filtra sugestões ignorando maiúsculas, minúsculas e acentos incorretos
-  const matchingPresets = newItem.name.trim() === '' ? [] : PRESET_PRODUCTS.filter(p => 
-    normalizeText(p.name).includes(normalizeText(newItem.name))
-  ).slice(0, 5);
+  // Filtra e ORDENA ALFABETICAMENTE as sugestões
+  const query = normalizeText(newItem.name.trim());
+  const matchingPresets = query === '' ? [] : PRESET_PRODUCTS
+    .filter(p => normalizeText(p.name).includes(query))
+    .sort((a, b) => {
+      const nameA = normalizeText(a.name);
+      const nameB = normalizeText(b.name);
+      
+      const startsWithA = nameA.startsWith(query);
+      const startsWithB = nameB.startsWith(query);
+
+      // Prioriza os que começam exatamente com o texto digitado
+      if (startsWithA && !startsWithB) return -1;
+      if (!startsWithA && startsWithB) return 1;
+
+      // Ordenação Alfabética padrão (A-Z)
+      return a.name.localeCompare(b.name, 'pt-BR');
+    })
+    .slice(0, 6);
 
   const handleSelectPreset = (preset) => {
     setNewItem({
@@ -160,11 +175,13 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
-    const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredItems = items
+    .filter(item => {
+      const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
+      const matchesCategory = selectedCategory === 'Todos' || item.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')); // Produtos da despensa também ordenados em A-Z
 
   // ==========================================
   // 4. INTERFACE GRÁFICA (JSX)
@@ -221,7 +238,7 @@ function App() {
         </div>
       </header>
 
-      {/* Conteúdo */}
+      {/* Conteúdo Principal */}
       <main className="max-w-6xl mx-auto px-4 mt-8">
         {activeTab === 'pantry' && (
           <div className="space-y-6">
@@ -262,7 +279,7 @@ function App() {
               ))}
             </div>
 
-            {/* Grid */}
+            {/* Grid de Itens em Ordem Alfabética */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map((item) => {
                 const isLow = item.quantity <= item.minQuantity;
@@ -344,7 +361,7 @@ function App() {
       </main>
 
       {/* ==========================================
-          5. MODAL COM AUTOCOMPLETE INTELIGENTE
+          5. MODAL COM AUTOCOMPLETE ORDENADO EM A-Z
           ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -352,10 +369,9 @@ function App() {
             <h3 className="text-lg font-bold text-slate-800 mb-4">Adicionar Novo Mantimento</h3>
             
             <form onSubmit={handleAddItem} className="space-y-4">
-              {/* Campo de Nome com Sugestões */}
               <div className="relative">
                 <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Digite sem acento ou minúsculo)
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Sugestões em Ordem Alfabética)
                 </label>
                 <input
                   type="text"
@@ -366,7 +382,7 @@ function App() {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
 
-                {/* Lista suspensa de pré-visualização */}
+                {/* Sugestões em Ordem Alfabética */}
                 {matchingPresets.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 overflow-hidden max-h-48 overflow-y-auto">
                     {matchingPresets.map((preset, idx) => (
@@ -456,5 +472,4 @@ function App() {
   );
 }
 
-// Exportação padrão obrigatória na última linha
 export default App;
