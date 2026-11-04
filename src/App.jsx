@@ -7,13 +7,12 @@ import {
 
 function App() {
   // ==========================================
-  // 1. BASE DE DADOS DE PRODUTOS PRÉ-CADASTRADOS
+  // 1. BASE DE DADOS COM CATEGORIAS RIGOROSAMENTE CORRIGIDAS
   // ==========================================
   const PRESET_PRODUCTS = [
+    // Grãos e Massas
     { name: 'Arroz 5kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Feijão Carioca 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
-    { name: 'Açúcar 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
-    { name: 'Sal Refinado 1kg', category: 'Temperos', unit: 'pct', minQuantity: 1 },
     { name: 'Farinha de Trigo 1kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Farinha de Mandioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Fubá', category: 'Grãos', unit: 'pct', minQuantity: 1 },
@@ -23,31 +22,25 @@ function App() {
     { name: 'Tapioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Milho para Pipoca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
 
+    // Laticínios
+    { name: 'Leite Integral 1L', category: 'Laticínios', unit: 'un', minQuantity: 6 },
+    { name: 'Manteiga / Margarina 200g', category: 'Laticínios', unit: 'un', minQuantity: 1 },
+    { name: 'Requeijão', category: 'Laticínios', unit: 'un', minQuantity: 1 },
+    { name: 'Queijo Mussarela 200g', category: 'Laticínios', unit: 'pct', minQuantity: 1 },
+
+    // Bebidas e Matinais
+    { name: 'Café em Pó 500g', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
+    { name: 'Achocolatado em Pó', category: 'Bebidas', unit: 'un', minQuantity: 1 },
+    { name: 'Chá', category: 'Bebidas', unit: 'cx', minQuantity: 1 },
+    { name: 'Cereal Matinal / Granola', category: 'Bebidas', unit: 'pct', minQuantity: 1 },
+
+    // Temperos, Óleos e Condimentos
     { name: 'Óleo de Soja 900ml', category: 'Temperos', unit: 'un', minQuantity: 2 },
     { name: 'Azeite de Oliva 500ml', category: 'Temperos', unit: 'un', minQuantity: 1 },
+    { name: 'Sal Refinado 1kg', category: 'Temperos', unit: 'pct', minQuantity: 1 },
     { name: 'Vinagre', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Molho de Tomate 340g', category: 'Temperos', unit: 'un', minQuantity: 3 },
     { name: 'Extrato de Tomate', category: 'Temperos', unit: 'un', minQuantity: 2 },
-    { name: 'Milho-verde em Conserva', category: 'Outros', unit: 'un', minQuantity: 2 },
-    { name: 'Ervilha em Conserva', category: 'Outros', unit: 'un', minQuantity: 2 },
-    { name: 'Atum em Lata', category: 'Outros', unit: 'un', minQuantity: 2 },
-    { name: 'Sardinha em Lata', category: 'Outros', unit: 'un', minQuantity: 2 },
-    { name: 'Azeitona', category: 'Outros', unit: 'un', minQuantity: 1 },
-    { name: 'Palmito', category: 'Outros', unit: 'un', minQuantity: 1 },
-    { name: 'Leite de Coco', category: 'Outros', unit: 'un', minQuantity: 1 },
-
-    { name: 'Café em Pó 500g', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
-    { name: 'Leite Integral 1L', category: 'Laticínios', unit: 'un', minQuantity: 6 },
-    { name: 'Achocolatado em Pó', category: 'Bebidas', unit: 'un', minQuantity: 1 },
-    { name: 'Chá', category: 'Bebidas', unit: 'cx', minQuantity: 1 },
-    { name: 'Pão de Forma', category: 'Outros', unit: 'pct', minQuantity: 2 },
-    { name: 'Torradas', category: 'Outros', unit: 'pct', minQuantity: 1 },
-    { name: 'Biscoito Doce / Recheado', category: 'Outros', unit: 'pct', minQuantity: 2 },
-    { name: 'Cereal Matinal / Granola', category: 'Bebidas', unit: 'pct', minQuantity: 1 },
-    { name: 'Manteiga / Margarina 200g', category: 'Laticínios', unit: 'un', minQuantity: 1 },
-    { name: 'Requeijão', category: 'Laticínios', unit: 'un', minQuantity: 1 },
-    { name: 'Doce de Leite / Geleia', category: 'Outros', unit: 'un', minQuantity: 1 },
-
     { name: 'Alho e Cebola', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Orégano / Pimenta-do-reino', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Colorau / Páprica', category: 'Temperos', unit: 'un', minQuantity: 1 },
@@ -55,6 +48,25 @@ function App() {
     { name: 'Maionese / Ketchup / Mostarda', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Molho Shoyu', category: 'Temperos', unit: 'un', minQuantity: 1 },
 
+    // Limpeza
+    { name: 'Detergente Líquido 500ml', category: 'Limpeza', unit: 'un', minQuantity: 3 },
+    { name: 'Sabão em Pó 1kg', category: 'Limpeza', unit: 'cx', minQuantity: 1 },
+    { name: 'Papel Higiênico 12un', category: 'Limpeza', unit: 'pct', minQuantity: 2 },
+    { name: 'Esponja de Aço / Louça', category: 'Limpeza', unit: 'pct', minQuantity: 1 },
+
+    // Outros (Açúcar, Conservas, Carnes, Pães e Congelados)
+    { name: 'Açúcar 1kg', category: 'Outros', unit: 'pct', minQuantity: 2 },
+    { name: 'Pão de Forma', category: 'Outros', unit: 'pct', minQuantity: 2 },
+    { name: 'Torradas', category: 'Outros', unit: 'pct', minQuantity: 1 },
+    { name: 'Biscoito Doce / Recheado', category: 'Outros', unit: 'pct', minQuantity: 2 },
+    { name: 'Doce de Leite / Geleia', category: 'Outros', unit: 'un', minQuantity: 1 },
+    { name: 'Milho-verde em Conserva', category: 'Outros', unit: 'un', minQuantity: 2 },
+    { name: 'Ervilha em Conserva', category: 'Outros', unit: 'un', minQuantity: 2 },
+    { name: 'Atum em Lata', category: 'Outros', unit: 'un', minQuantity: 2 },
+    { name: 'Sardinha em Lata', category: 'Outros', unit: 'un', minQuantity: 2 },
+    { name: 'Azeitona', category: 'Outros', unit: 'un', minQuantity: 1 },
+    { name: 'Palmito', category: 'Outros', unit: 'un', minQuantity: 1 },
+    { name: 'Leite de Coco', category: 'Outros', unit: 'un', minQuantity: 1 },
     { name: 'Peito de Frango / Filé', category: 'Outros', unit: 'kg', minQuantity: 2 },
     { name: 'Carne Bovina Moída', category: 'Outros', unit: 'kg', minQuantity: 2 },
     { name: 'Linguiça / Salsicha', category: 'Outros', unit: 'pct', minQuantity: 1 },
@@ -101,7 +113,7 @@ function App() {
   const categories = ['Todos', 'Grãos', 'Laticínios', 'Temperos', 'Bebidas', 'Limpeza', 'Outros'];
 
   // ==========================================
-  // 3. FUNÇÕES DE NORMALIZAÇÃO E CRITÉRIO DE BUSCA
+  // 3. FUNÇÕES DE NORMALIZAÇÃO E BUSCA INTELIGENTE
   // ==========================================
   const normalizeText = (text) => {
     return text
@@ -110,7 +122,6 @@ function App() {
       .replace(/[\u0300-\u036f]/g, '');
   };
 
-  // Sugestões inteligentes priorizando termos que INICIAM com o que foi digitado
   const query = normalizeText(newItem.name.trim());
   const matchingPresets = query === '' ? [] : PRESET_PRODUCTS
     .filter(p => normalizeText(p.name).includes(query))
@@ -121,13 +132,12 @@ function App() {
       const startsWithA = nameA.startsWith(query);
       const startsWithB = nameB.startsWith(query);
 
-      // Prioridade máxima para palavras que COMEÇAM com o termo digitado
       if (startsWithA && !startsWithB) return -1;
       if (!startsWithA && startsWithB) return 1;
 
       return a.name.localeCompare(b.name, 'pt-BR');
     })
-    .slice(0, 4); // Limite de 4 sugestões para evitar poluição visual no modal
+    .slice(0, 4);
 
   const handleSelectPreset = (preset) => {
     setNewItem({
@@ -169,7 +179,6 @@ function App() {
     setItems(items.filter(item => item.id !== id));
   };
 
-  // Filtragem da despensa principal respeitando a categoria e pesquisa abrangente
   const filteredItems = items
     .filter(item => {
       const matchesSearch = normalizeText(item.name).includes(normalizeText(searchTerm));
@@ -257,7 +266,7 @@ function App() {
               </button>
             </div>
 
-            {/* Categorias com Botão de Pesquisa Abrangente / Limpeza de Filtro */}
+            {/* Categorias e Botão de Pesquisa Abrangente */}
             <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
               <div className="flex gap-2">
                 {categories.map((cat) => (
@@ -275,12 +284,11 @@ function App() {
                 ))}
               </div>
 
-              {/* Botão para pesquisa abrangente (se houver categoria específica ou termo de busca ativo) */}
               {(selectedCategory !== 'Todos' || searchTerm !== '') && (
                 <button
                   onClick={() => { setSelectedCategory('Todos'); setSearchTerm(''); }}
                   className="flex items-center gap-1.5 px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl text-xs font-bold whitespace-nowrap transition-all"
-                  title="Limpar filtros e fazer pesquisa abrangente"
+                  title="Limpar filtros e ver tudo"
                 >
                   <X className="w-3.5 h-3.5" /> Pesquisa Abrangente (Mostrar Tudo)
                 </button>
@@ -369,7 +377,7 @@ function App() {
       </main>
 
       {/* ==========================================
-          5. MODAL COM AUTOCOMPLETE OTIMIZADO
+          5. MODAL DE ADICIONAR ITEM
           ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -379,18 +387,17 @@ function App() {
             <form onSubmit={handleAddItem} className="space-y-4">
               <div className="relative">
                 <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Prioridade para início do termo)
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Autocompletar com classe correta)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: arr (Arroz)..."
+                  placeholder="Ex: acucar, cafe, arroz..."
                   value={newItem.name}
                   onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
 
-                {/* Sugestões Limpas e Críticas */}
                 {matchingPresets.length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 overflow-hidden max-h-48 overflow-y-auto">
                     {matchingPresets.map((preset, idx) => (
