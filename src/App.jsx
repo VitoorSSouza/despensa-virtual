@@ -7,39 +7,39 @@ import {
 
 function App() {
   // ==========================================
-  // 1. BASE DE DADOS COM CATEGORIAS RIGOROSAMENTE CORRIGIDAS
+  // 1. BASE DE DADOS DE PRODUTOS PRÉ-CADASTRADOS
   // ==========================================
   const PRESET_PRODUCTS = [
     // Grãos e Massas
-    { name: 'Arroz 5kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
-    { name: 'Feijão Carioca 1kg', category: 'Grãos', unit: 'pct', minQuantity: 2 },
-    { name: 'Farinha de Trigo 1kg', category: 'Grãos', unit: 'pct', minQuantity: 1 },
+    { name: 'Arroz', category: 'Grãos', unit: 'pct', minQuantity: 1 },
+    { name: 'Feijão Carioca', category: 'Grãos', unit: 'pct', minQuantity: 2 },
+    { name: 'Farinha de Trigo', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Farinha de Mandioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Fubá', category: 'Grãos', unit: 'pct', minQuantity: 1 },
-    { name: 'Macarrão Spagetti 500g', category: 'Grãos', unit: 'pct', minQuantity: 2 },
+    { name: 'Macarrão', category: 'Grãos', unit: 'pct', minQuantity: 2 },
     { name: 'Amido de Milho', category: 'Grãos', unit: 'cx', minQuantity: 1 },
     { name: 'Aveia', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Tapioca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
     { name: 'Milho para Pipoca', category: 'Grãos', unit: 'pct', minQuantity: 1 },
 
     // Laticínios
-    { name: 'Leite Integral 1L', category: 'Laticínios', unit: 'un', minQuantity: 6 },
-    { name: 'Manteiga / Margarina 200g', category: 'Laticínios', unit: 'un', minQuantity: 1 },
+    { name: 'Leite Integral', category: 'Laticínios', unit: 'un', minQuantity: 6 },
+    { name: 'Manteiga / Margarina', category: 'Laticínios', unit: 'un', minQuantity: 1 },
     { name: 'Requeijão', category: 'Laticínios', unit: 'un', minQuantity: 1 },
-    { name: 'Queijo Mussarela 200g', category: 'Laticínios', unit: 'pct', minQuantity: 1 },
+    { name: 'Queijo Mussarela', category: 'Laticínios', unit: 'pct', minQuantity: 1 },
 
     // Bebidas e Matinais
-    { name: 'Café em Pó 500g', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
+    { name: 'Café em Pó', category: 'Bebidas', unit: 'pct', minQuantity: 2 },
     { name: 'Achocolatado em Pó', category: 'Bebidas', unit: 'un', minQuantity: 1 },
     { name: 'Chá', category: 'Bebidas', unit: 'cx', minQuantity: 1 },
     { name: 'Cereal Matinal / Granola', category: 'Bebidas', unit: 'pct', minQuantity: 1 },
 
     // Temperos, Óleos e Condimentos
-    { name: 'Óleo de Soja 900ml', category: 'Temperos', unit: 'un', minQuantity: 2 },
-    { name: 'Azeite de Oliva 500ml', category: 'Temperos', unit: 'un', minQuantity: 1 },
-    { name: 'Sal Refinado 1kg', category: 'Temperos', unit: 'pct', minQuantity: 1 },
+    { name: 'Óleo de Soja', category: 'Temperos', unit: 'un', minQuantity: 2 },
+    { name: 'Azeite de Oliva', category: 'Temperos', unit: 'un', minQuantity: 1 },
+    { name: 'Sal Refinado', category: 'Temperos', unit: 'pct', minQuantity: 1 },
     { name: 'Vinagre', category: 'Temperos', unit: 'un', minQuantity: 1 },
-    { name: 'Molho de Tomate 340g', category: 'Temperos', unit: 'un', minQuantity: 3 },
+    { name: 'Molho de Tomate', category: 'Temperos', unit: 'un', minQuantity: 3 },
     { name: 'Extrato de Tomate', category: 'Temperos', unit: 'un', minQuantity: 2 },
     { name: 'Alho e Cebola', category: 'Temperos', unit: 'un', minQuantity: 1 },
     { name: 'Orégano / Pimenta-do-reino', category: 'Temperos', unit: 'un', minQuantity: 1 },
@@ -49,13 +49,13 @@ function App() {
     { name: 'Molho Shoyu', category: 'Temperos', unit: 'un', minQuantity: 1 },
 
     // Limpeza
-    { name: 'Detergente Líquido 500ml', category: 'Limpeza', unit: 'un', minQuantity: 3 },
-    { name: 'Sabão em Pó 1kg', category: 'Limpeza', unit: 'cx', minQuantity: 1 },
-    { name: 'Papel Higiênico 12un', category: 'Limpeza', unit: 'pct', minQuantity: 2 },
+    { name: 'Detergente Líquido', category: 'Limpeza', unit: 'un', minQuantity: 3 },
+    { name: 'Sabão em Pó', category: 'Limpeza', unit: 'cx', minQuantity: 1 },
+    { name: 'Papel Higiênico', category: 'Limpeza', unit: 'pct', minQuantity: 2 },
     { name: 'Esponja de Aço / Louça', category: 'Limpeza', unit: 'pct', minQuantity: 1 },
 
-    // Outros (Açúcar, Conservas, Carnes, Pães e Congelados)
-    { name: 'Açúcar 1kg', category: 'Outros', unit: 'pct', minQuantity: 2 },
+    // Outros (Carnes, Açúcar, Congelados - com suporte ideal para KG ou UN)
+    { name: 'Açúcar', category: 'Outros', unit: 'pct', minQuantity: 2 },
     { name: 'Pão de Forma', category: 'Outros', unit: 'pct', minQuantity: 2 },
     { name: 'Torradas', category: 'Outros', unit: 'pct', minQuantity: 1 },
     { name: 'Biscoito Doce / Recheado', category: 'Outros', unit: 'pct', minQuantity: 2 },
@@ -69,8 +69,8 @@ function App() {
     { name: 'Leite de Coco', category: 'Outros', unit: 'un', minQuantity: 1 },
     { name: 'Peito de Frango / Filé', category: 'Outros', unit: 'kg', minQuantity: 2 },
     { name: 'Carne Bovina Moída', category: 'Outros', unit: 'kg', minQuantity: 2 },
-    { name: 'Linguiça / Salsicha', category: 'Outros', unit: 'pct', minQuantity: 1 },
-    { name: 'Bacon', category: 'Outros', unit: 'pct', minQuantity: 1 },
+    { name: 'Linguiça / Salsicha', category: 'Outros', unit: 'kg', minQuantity: 1 },
+    { name: 'Bacon', category: 'Outros', unit: 'kg', minQuantity: 1 },
     { name: 'Hambúrguer Congelado', category: 'Outros', unit: 'pct', minQuantity: 1 },
     { name: 'Batata Congelada', category: 'Outros', unit: 'pct', minQuantity: 1 },
     { name: 'Pão de Queijo', category: 'Outros', unit: 'pct', minQuantity: 1 }
@@ -80,13 +80,13 @@ function App() {
   // 2. ESTADOS DO APLICATIVO
   // ==========================================
   const [items, setItems] = useState([
-    { id: 1, name: 'Arroz 5kg', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
-    { id: 2, name: 'Feijão Carioca 1kg', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' },
-    { id: 3, name: 'Leite Integral 1L', category: 'Laticínios', quantity: 4, minQuantity: 6, unit: 'un', expiryDate: '2026-03-12', addedBy: 'Carlos' }
+    { id: 1, name: 'Arroz', category: 'Grãos', quantity: 2, minQuantity: 1, unit: 'pct', expiryDate: '2026-08-15', addedBy: 'Vitor' },
+    { id: 2, name: 'Feijão Carioca', category: 'Grãos', quantity: 1, minQuantity: 2, unit: 'pct', expiryDate: '2026-05-10', addedBy: 'Ana' },
+    { id: 3, name: 'Leite Integral', category: 'Laticínios', quantity: 4, minQuantity: 6, unit: 'un', expiryDate: '2026-03-12', addedBy: 'Carlos' }
   ]);
 
   const [shoppingList] = useState([
-    { id: 101, name: 'Leite Integral 1L', quantityNeeded: 2, checked: false }
+    { id: 101, name: 'Leite Integral', quantityNeeded: 2, checked: false }
   ]);
 
   const [residents] = useState([
@@ -105,7 +105,7 @@ function App() {
     category: 'Grãos',
     quantity: 1,
     minQuantity: 1,
-    unit: 'un',
+    unit: 'un', // Padrão inicial
     expiryDate: '',
     addedBy: 'Vitor'
   });
@@ -266,7 +266,7 @@ function App() {
               </button>
             </div>
 
-            {/* Categorias e Botão de Pesquisa Abrangente */}
+            {/* Categorias e Pesquisa Abrangente */}
             <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
               <div className="flex gap-2">
                 {categories.map((cat) => (
@@ -377,7 +377,7 @@ function App() {
       </main>
 
       {/* ==========================================
-          5. MODAL DE ADICIONAR ITEM
+          5. MODAL DE ADICIONAR ITEM COM SELETOR DE UNIDADE
           ========================================== */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -387,12 +387,12 @@ function App() {
             <form onSubmit={handleAddItem} className="space-y-4">
               <div className="relative">
                 <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item (Autocompletar com classe correta)
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Nome do Item
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: acucar, cafe, arroz..."
+                  placeholder="Ex: Arroz, Frango, Leite..."
                   value={newItem.name}
                   onChange={(e) => setNewItem({...newItem, name: e.target.value})}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -446,22 +446,42 @@ function App() {
                   <input
                     type="number"
                     min="0"
+                    step="any"
                     value={newItem.quantity}
                     onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   />
                 </div>
 
+                {/* Seletor Interativo de Unidade (Unidade vs Quilo vs Outros) */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Estoque Mínimo</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={newItem.minQuantity}
-                    onChange={(e) => setNewItem({...newItem, minQuantity: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Unidade de Medida</label>
+                  <div className="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200">
+                    {['un', 'kg', 'pct', 'cx'].map((u) => (
+                      <button
+                        key={u}
+                        type="button"
+                        onClick={() => setNewItem({...newItem, unit: u})}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                          newItem.unit === u ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {u}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Estoque Mínimo Alerta</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newItem.minQuantity}
+                  onChange={(e) => setNewItem({...newItem, minQuantity: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
